@@ -1,0 +1,19 @@
+/project-root
+│── /src
+│   │── /config        # Configuration files (DB, env, etc.)
+│   │── /controllers   # Business logic for each module
+│   │── /models        # Mongoose models
+│   │── /routes        # Express routes
+│   │── /middlewares   # Middleware (auth, logging, validation)
+│   │── /utils         # Utility functions (helpers, error handlers, etc.)
+│   │── /services      # External integrations (e.g., Razorpay, Google Maps API)
+│   │── /validations   # Joi or express-validator schemas
+│   │── app.js         # Express app initialization
+│   │── server.js      # Server entry point
+│
+│── /tests            # Unit & integration tests
+│── /public           # Static files (if needed)
+│── .env              # Environment variables
+│── .gitignore
+│── package.json
+│── README.md
