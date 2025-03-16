@@ -1,4 +1,8 @@
 import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
+import EventHost from "../models/EventHost.js";
+import Farmer from "../models/Farmer.js";
+import NGO from "../models/NGO.js";
 import User from "../models/User.js";
 
 const handleRegister = async (req, res) => {
@@ -6,12 +10,12 @@ const handleRegister = async (req, res) => {
     const { name, email, password, phone, address } = req.body;
     const existingUser = await User.findOne({ email }).exec();
     if (existingUser) {
-      return res.status(400).json({ error: "User already exists." });
+      return res.status(400).json({ message: "User already exists." });
     }
     if (password.length < 8) {
       return res
         .status(401)
-        .json({ error: "Password should be at least 8 characters long." });
+        .json({ message: "Password should be at least 8 characters long." });
     }
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
@@ -34,7 +38,7 @@ const handleRegister = async (req, res) => {
 const handleLogin = async (req, res) => {
   try {
     const { email, password } = req.body;
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email }).exec();
     if (!user)
       return res.status(400).json({ error: "Invalid email or password" });
 
@@ -43,13 +47,18 @@ const handleLogin = async (req, res) => {
       return res.status(400).json({ error: "Invalid email or password" });
 
     const token = jwt.sign(
-      { id: user._id, roles: user.roles },
+      { id: user._id, email: user.email, roles: user.role },
       process.env.JWT_SECRET,
       { expiresIn: "1d" }
     );
-    res.json({
+    res.status(201).json({
       token,
-      user: { id: user._id, name: user.name, roles: user.roles },
+      message: "Login successful",
+      user: {
+        email: user.email,
+        role: user.role,
+        name: user.name,
+      },
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -58,15 +67,55 @@ const handleLogin = async (req, res) => {
 
 const handleApplyFarmer = async (req, res) => {
   try {
-    const { farmDetails } = req.body;
-    const user = await User.findById(req.user.id);
-    if (!user) return res.status(404).json({ error: "User not found" });
+    const {
+      farmAddress,
+      farmSize,
+      farmType,
+      farmProduce,
+      farmProduceQuantity,
+      farmProducePrice,
+      farmProduceImage,
+      farmProduceDescription,
+      farmProduceAvailability,
+      farmProduceDelivery,
+      farmProduceDeliveryFee,
+      farmProduceDeliveryTime,
+      farmProducePaymentMethod,
+      farmProducePaymentDetails,
+      farmProducePaymentProof,
+      idProof,
+    } = req.body;
+    const user = await User.findById(req.user.id).exec();
+    if (!user) return res.status(404).json({ message: "User not found" });
+    if (user.role.includes("farmer"))
+      return res.status(401).json({ message: "User is already a farmer" });
 
-    user.roles.push("farmer");
-    user.farmDetails = farmDetails;
+    // Farmer Verification Logic
+
+    const farmDetails = {
+      farmAddress,
+      farmSize,
+      farmType,
+      farmProduce,
+      farmProduceQuantity,
+      farmProducePrice,
+      farmProduceImage,
+      farmProduceDescription,
+      farmProduceAvailability,
+      farmProduceDelivery,
+      farmProduceDeliveryFee,
+      farmProduceDeliveryTime,
+      farmProducePaymentMethod,
+      farmProducePaymentDetails,
+      farmProducePaymentProof,
+      idProof,
+    };
+    user.role.push("farmer");
+    const farmer = new Farmer({ ...farmDetails, userId: user._id });
     await user.save();
+    await farmer.save();
 
-    res.json({ message: "Farmer role added successfully", roles: user.roles });
+    res.status(201).json({ message: "Farmer role added successfully" });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -74,17 +123,52 @@ const handleApplyFarmer = async (req, res) => {
 
 const handleApplyEventHost = async (req, res) => {
   try {
-    const { organization, eventType, location } = req.body;
-    const user = await User.findById(req.user.id);
+    const {
+      organization,
+      phone,
+      email,
+      address,
+      city,
+      state,
+      zip,
+      country,
+      about,
+      website,
+      facebook,
+      instagram,
+      twitter,
+      idProof,
+    } = req.body;
+    const user = await User.findById(req.user.id).exec();
     if (!user) return res.status(404).json({ error: "User not found" });
+    if (user.role.includes("event_host"))
+      return res.status(401).json({ error: "User is already an event host" });
 
-    user.roles.push("event_host");
-    user.eventHostDetails = { organization, eventType, location };
+    // Event Host Verification Logic
+
+    user.role.push("event_host");
+    const eventHost = new EventHost({
+      organization,
+      phone,
+      email,
+      address,
+      city,
+      state,
+      zip,
+      country,
+      about,
+      website,
+      facebook,
+      instagram,
+      twitter,
+      idProof,
+      userId: user._id,
+    });
     await user.save();
+    await eventHost.save();
 
-    res.json({
+    res.status(201).json({
       message: "Event Host role added successfully",
-      roles: user.roles,
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -93,15 +177,47 @@ const handleApplyEventHost = async (req, res) => {
 
 const handleApplyNGORole = async (req, res) => {
   try {
-    const { ngoName, registrationNumber, cause, headquarters } = req.body;
+    const {
+      registrationNumber,
+      registrationProof,
+      name,
+      cause,
+      email,
+      phone,
+      address,
+      description,
+      website,
+      logo,
+      cover,
+      status,
+    } = req.body;
     const user = await User.findById(req.user.id);
     if (!user) return res.status(404).json({ error: "User not found" });
+    if (user.role.includes("ngo"))
+      return res.status(401).json({ error: "User is already an NGO" });
 
-    user.roles.push("ngo");
-    user.ngoDetails = { ngoName, registrationNumber, cause, headquarters };
+    // NGO Verification Logic
+
+    user.role.push("ngo");
+    const ngo = new NGO({
+      registrationNumber,
+      registrationProof,
+      name,
+      cause,
+      email,
+      phone,
+      address,
+      description,
+      website,
+      logo,
+      cover,
+      status,
+      userId: user._id,
+    });
+
     await user.save();
-
-    res.json({ message: "NGO role added successfully", roles: user.roles });
+    await ngo.save();
+    res.status(201).json({ message: "NGO role added successfully" });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -109,12 +225,19 @@ const handleApplyNGORole = async (req, res) => {
 
 const getRoles = async (req, res) => {
   try {
-    const user = await User.findById(req.params.userId);
+    const user = await User.findById(req.params.userId).exec();
     if (!user) return res.status(404).json({ error: "User not found" });
-    res.json({ userId: user._id, roles: user.roles });
+    res.json({ userId: user._id, roles: user.role });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 };
 
-export { handleApplyFarmer, handleLogin, handleRegister, handleApplyEventHost, handleApplyNGORole, getRoles };
+export {
+  getRoles,
+  handleApplyEventHost,
+  handleApplyFarmer,
+  handleApplyNGORole,
+  handleLogin,
+  handleRegister,
+};

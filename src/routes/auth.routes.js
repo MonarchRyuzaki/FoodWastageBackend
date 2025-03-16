@@ -7,14 +7,15 @@ import {
   handleLogin,
   handleRegister,
 } from "../controllers/auth.js";
+import { verifyAuthToken } from "../middlewares/auth.js";
 
 const router = express.Router();
 
 router.post("/register", handleRegister);
 router.post("/login", handleLogin);
-router.post("/user/apply-farmer", handleApplyFarmer);
-router.post("/user/apply-event-host", handleApplyEventHost);
-router.post("/user/apply-ngo", handleApplyNGORole);
+router.post("/user/apply-farmer", verifyAuthToken, handleApplyFarmer);
+router.post("/user/apply-event-host", verifyAuthToken, handleApplyEventHost);
+router.post("/user/apply-ngo", verifyAuthToken, handleApplyNGORole);
 router.post("/user/roles/:userId", getRoles);
 
 router.get("/", (req, res) => {
