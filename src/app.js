@@ -3,10 +3,9 @@ import cors from "cors";
 import morgan from "morgan";
 import dotenv from "dotenv";
 dotenv.config({ path: "../.env" });
-import mongoose from "mongoose";
 
 import authRoutes from "./routes/auth.routes.js";
-
+import foodDonationRoutes from "./routes/donation.routes.js";
 
 const app = express();
 
@@ -17,5 +16,6 @@ app.use(morgan("dev"));
 
 // Routes
 app.use("/api/auth", authRoutes);
+app.use("/api/food-donations", foodDonationRoutes);
 
 export default app;
