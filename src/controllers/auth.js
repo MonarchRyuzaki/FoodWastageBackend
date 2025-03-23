@@ -4,7 +4,7 @@ import EventHost from "../models/EventHost.js";
 import Farmer from "../models/Farmer.js";
 import NGO from "../models/NGO.js";
 import User from "../models/User.js";
-import { validateRegistration } from "../utils/validateRegistration.js";
+import { validateLogin, validateRegistration } from "../utils/validateAuth.js";
 
 const handleRegister = async (req, res) => {
   try {
@@ -35,13 +35,11 @@ const handleRegister = async (req, res) => {
 const handleLogin = async (req, res) => {
   try {
     const { email, password } = req.body;
+    const validationResult = await validateLogin(req, res);
+    if (validationResult.error) {
+      return res.status(400).json({ error: validationResult.error });
+    }
     const user = await User.findOne({ email }).exec();
-    if (!user)
-      return res.status(400).json({ error: "Invalid email or password" });
-
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch)
-      return res.status(400).json({ error: "Invalid email or password" });
 
     const token = jwt.sign(
       { id: user._id, email: user.email, roles: user.role },

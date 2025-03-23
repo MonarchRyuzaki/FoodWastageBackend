@@ -1,5 +1,6 @@
 import validator from "validator";
 import User from "../models/User.js";
+import bcrypt from "bcryptjs";
 
 export const validateRegistration = async (req, res) => {
   let { name, email, password, phone, address } = req.body;
@@ -52,5 +53,18 @@ export const validateRegistration = async (req, res) => {
   }
 
   // If all validations pass
+  return { success: true };
+};
+
+export const validateLogin = async (req, res) => {
+  const { email, password } = req.body;
+  const user = await User.findOne({ email }).exec();
+  if (!user)
+    return { error: "Invalid email or password" };
+
+  const isMatch = await bcrypt.compare(password, user.password);
+  if (!isMatch)
+    return { error: "Invalid email or password" };
+
   return { success: true };
 };
