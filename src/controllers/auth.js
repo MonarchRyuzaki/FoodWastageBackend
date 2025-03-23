@@ -114,6 +114,9 @@ const handleApplyFarmer = async (req, res) => {
 
 const handleApplyEventHost = async (req, res) => {
   try {
+    if (!req.file) {
+      return res.status(400).json({ error: "ID Proof is required" });
+    }
     const {
       organization,
       phone,
@@ -128,12 +131,22 @@ const handleApplyEventHost = async (req, res) => {
       facebook,
       instagram,
       twitter,
-      idProof,
     } = req.body;
     const user = await User.findById(req.user.id).exec();
     if (!user) return res.status(404).json({ error: "User not found" });
     if (user.role.includes("event_host"))
       return res.status(401).json({ error: "User is already an event host" });
+
+    req.body.idProof = await uploadToCloudinary(
+      req.file.buffer,
+      "event_host-id-proof"
+    );
+
+    const { error } = validateEventHost(req.body);
+    if (error) {
+      return res.status(400).json({ error: error.details[0].message });
+    }
+
 
     // Event Host Verification Logic
 
@@ -152,7 +165,7 @@ const handleApplyEventHost = async (req, res) => {
       facebook,
       instagram,
       twitter,
-      idProof,
+      idProof : req.body.idProof,
       userId: user._id,
     });
     await user.save();

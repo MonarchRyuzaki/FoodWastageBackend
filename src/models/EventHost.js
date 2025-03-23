@@ -19,10 +19,6 @@ const eventHostSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    phone: {
-      type: String,
-      required: true,
-    },
     address: {
       type: String,
       required: true,
@@ -36,30 +32,6 @@ const eventHostSchema = new mongoose.Schema(
       required: true,
     },
     zip: {
-      type: String,
-      required: true,
-    },
-    country: {
-      type: String,
-      required: true,
-    },
-    about: {
-      type: String,
-      required: true,
-    },
-    website: {
-      type: String,
-      required: true,
-    },
-    facebook: {
-      type: String,
-      required: true,
-    },
-    instagram: {
-      type: String,
-      required: true,
-    },
-    twitter: {
       type: String,
       required: true,
     },
