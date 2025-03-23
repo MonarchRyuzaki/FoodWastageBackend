@@ -42,7 +42,7 @@ export const validateFarmer = (data) => {
 };
 
 // Event Host Validation
-const validateEventHost = (data) => {
+export const validateEventHost = (data) => {
   const schema = Joi.object({
     userId: Joi.string().required().messages({
       "any.required": "User ID is required.",
@@ -100,4 +100,60 @@ const validateEventHost = (data) => {
   return schema.validate(data);
 };
 
-export default validateEventHost;
+// NGO Validation
+export const validateNGO = (data) => {
+  const schema = Joi.object({
+    userId: Joi.string().required().messages({
+      "any.required": "User ID is required.",
+    }),
+    registrationNumber: Joi.string().required().messages({
+      "string.empty": "Registration number is required.",
+    }),
+    registrationProof: Joi.string()
+      .uri()
+      .required()
+      .pattern(/^https?:\/\/.*\.(jpg|jpeg|png|pdf)$/)
+      .messages({
+        "string.pattern.base":
+          "Registration proof must be a valid URL pointing to a JPG, JPEG, PNG, or PDF.",
+        "any.required": "Registration proof is required.",
+      }),
+    name: Joi.string().min(3).max(100).required().messages({
+      "string.empty": "NGO name is required.",
+      "string.min": "NGO name must be at least 3 characters.",
+      "string.max": "NGO name cannot exceed 100 characters.",
+    }),
+    cause: Joi.string().min(3).max(200).required().messages({
+      "string.empty": "Cause is required.",
+      "string.min": "Cause must be at least 3 characters.",
+      "string.max": "Cause cannot exceed 200 characters.",
+    }),
+    email: Joi.string().email().required().messages({
+      "string.email": "Invalid email format.",
+      "any.required": "Email is required.",
+    }),
+    phone: Joi.string()
+      .pattern(/^[0-9]{10}$/)
+      .required()
+      .messages({
+        "string.pattern.base": "Phone number must be exactly 10 digits.",
+        "any.required": "Phone number is required.",
+      }),
+    address: Joi.string().max(200).required().messages({
+      "string.empty": "Address is required.",
+      "string.max": "Address cannot exceed 200 characters.",
+    }),
+    description: Joi.string().max(500).required().messages({
+      "string.empty": "Description is required.",
+      "string.max": "Description cannot exceed 500 characters.",
+    }),
+    status: Joi.string()
+      .valid("pending", "approved", "rejected")
+      .default("pending")
+      .messages({
+        "any.only": "Status must be one of: pending, approved, or rejected.",
+      }),
+  });
+
+  return schema.validate(data);
+};

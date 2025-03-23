@@ -6,7 +6,11 @@ import Farmer from "../models/Farmer.js";
 import NGO from "../models/NGO.js";
 import User from "../models/User.js";
 import { validateLogin, validateRegistration } from "../utils/validateAuth.js";
-import { validateFarmer } from "../utils/validateRolesRegistration.js";
+import {
+  validateEventHost,
+  validateFarmer,
+  validateNGO,
+} from "../utils/validateRolesRegistration.js";
 
 const handleRegister = async (req, res) => {
   try {
@@ -67,19 +71,11 @@ const handleApplyFarmer = async (req, res) => {
     if (!req.file) {
       return res.status(400).json({ error: "ID Proof is required" });
     }
-    const {
-      farmName,
-      farmAddress,
-      farmSize,
-      farmType,
-      cropsGrown,
-      yearsOfExperience,
-    } = req.body;
 
     req.body.idProof = await uploadToCloudinary(
       req.file.buffer,
       "farmer-id-proof"
-    );
+    ).url;
 
     const { error } = validateFarmer(req.body);
     if (error) {
@@ -92,17 +88,8 @@ const handleApplyFarmer = async (req, res) => {
 
     // Farmer Verification Logic
 
-    const farmDetails = {
-      farmName,
-      farmAddress,
-      farmSize,
-      farmType,
-      idProof: req.body.idProof,
-      cropsGrown,
-      yearsOfExperience,
-    };
     user.role.push("farmer");
-    const farmer = new Farmer({ ...farmDetails, userId: user._id });
+    const farmer = new Farmer({ ...req.body, userId: user._id });
     await user.save();
     await farmer.save();
 
@@ -117,21 +104,6 @@ const handleApplyEventHost = async (req, res) => {
     if (!req.file) {
       return res.status(400).json({ error: "ID Proof is required" });
     }
-    const {
-      organization,
-      phone,
-      email,
-      address,
-      city,
-      state,
-      zip,
-      country,
-      about,
-      website,
-      facebook,
-      instagram,
-      twitter,
-    } = req.body;
     const user = await User.findById(req.user.id).exec();
     if (!user) return res.status(404).json({ error: "User not found" });
     if (user.role.includes("event_host"))
@@ -140,32 +112,18 @@ const handleApplyEventHost = async (req, res) => {
     req.body.idProof = await uploadToCloudinary(
       req.file.buffer,
       "event_host-id-proof"
-    );
+    ).url;
 
     const { error } = validateEventHost(req.body);
     if (error) {
       return res.status(400).json({ error: error.details[0].message });
     }
 
-
     // Event Host Verification Logic
 
     user.role.push("event_host");
     const eventHost = new EventHost({
-      organization,
-      phone,
-      email,
-      address,
-      city,
-      state,
-      zip,
-      country,
-      about,
-      website,
-      facebook,
-      instagram,
-      twitter,
-      idProof : req.body.idProof,
+      ...req.body,
       userId: user._id,
     });
     await user.save();
@@ -181,41 +139,29 @@ const handleApplyEventHost = async (req, res) => {
 
 const handleApplyNGORole = async (req, res) => {
   try {
-    const {
-      registrationNumber,
-      registrationProof,
-      name,
-      cause,
-      email,
-      phone,
-      address,
-      description,
-      website,
-      logo,
-      cover,
-      status,
-    } = req.body;
-    const user = await User.findById(req.user.id);
+    if (!req.file) {
+      return res.status(400).json({ error: "Registraion Proof is required" });
+    }
+    const user = await User.findById(req.user.id).exec();
     if (!user) return res.status(404).json({ error: "User not found" });
     if (user.role.includes("ngo"))
       return res.status(401).json({ error: "User is already an NGO" });
+
+    req.body.registrationProof = await uploadToCloudinary(
+      req.file.buffer,
+      "ngo-registration-proof"
+    ).url;
+
+    const { error } = validateNGO(req.body);
+    if (error) {
+      return res.status(400).json({ error: error.details[0].message });
+    }
 
     // NGO Verification Logic
 
     user.role.push("ngo");
     const ngo = new NGO({
-      registrationNumber,
-      registrationProof,
-      name,
-      cause,
-      email,
-      phone,
-      address,
-      description,
-      website,
-      logo,
-      cover,
-      status,
+      ...req.body,
       userId: user._id,
     });
 

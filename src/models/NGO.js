@@ -39,18 +39,6 @@ const ngoSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    website: {
-      type: String,
-      required: true,
-    },
-    logo: {
-      type: String,
-      required: true,
-    },
-    cover: {
-      type: String,
-      required: true,
-    },
     status: {
       type: String,
       required: true,
