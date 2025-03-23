@@ -1,7 +1,7 @@
-import express from "express";
 import cors from "cors";
-import morgan from "morgan";
 import dotenv from "dotenv";
+import express from "express";
+import morgan from "morgan";
 dotenv.config({ path: "../.env" });
 
 import authRoutes from "./routes/auth.routes.js";
@@ -17,5 +17,8 @@ app.use(morgan("dev"));
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/food-donations", foodDonationRoutes);
+app.get("/", (req, res) => {
+  res.send("API is running...");
+});
 
 export default app;

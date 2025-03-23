@@ -4,18 +4,15 @@ import EventHost from "../models/EventHost.js";
 import Farmer from "../models/Farmer.js";
 import NGO from "../models/NGO.js";
 import User from "../models/User.js";
+import { validateRegistration } from "../utils/validateRegistration.js";
 
 const handleRegister = async (req, res) => {
   try {
     const { name, email, password, phone, address } = req.body;
-    const existingUser = await User.findOne({ email }).exec();
-    if (existingUser) {
-      return res.status(400).json({ message: "User already exists." });
-    }
-    if (password.length < 8) {
-      return res
-        .status(401)
-        .json({ message: "Password should be at least 8 characters long." });
+    const validationResult = await validateRegistration(req, res);
+    console.log(validationResult);
+    if (validationResult.error) {
+      return res.status(400).json({ error: validationResult.error });
     }
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
