@@ -9,21 +9,16 @@ const farmerSchema = new mongoose.Schema(
     },
     farmName: { type: String, required: true },
     farmAddress: { type: String, required: true },
-    farmSize: { type: Number, required: true },
-    farmType: { type: String, required: true },
-    farmProduce: { type: String, required: true },
-    farmProduceQuantity: { type: Number, required: true },
-    farmProducePrice: { type: Number, required: true },
-    farmProduceImage: { type: String, required: true },
-    farmProduceDescription: { type: String, required: true },
-    farmProduceAvailability: { type: Boolean, required: true },
-    farmProduceDelivery: { type: Boolean, required: true },
-    farmProduceDeliveryFee: { type: Number, required: true },
-    farmProduceDeliveryTime: { type: String, required: true },
-    farmProducePaymentMethod: { type: String, required: true },
-    farmProducePaymentDetails: { type: String, required: true },
-    farmProducePaymentProof: { type: String, required: true },
-    idProof: { type: String, required: true },
+    farmSize: { type: Number, required: true }, // Keeping it Number for consistency
+    farmType: [{
+      type: String,
+      required: true,
+      enum: ["Organic", "Dairy", "Aquaculture", "Poultry", "Horticulture"],
+    }], // E.g., Organic, Dairy, etc.
+    idProof: { type: String, required: true }, // URL for file upload
+    verified: { type: Boolean, default: false }, // For verification status
+    cropsGrown: [{ type: String }], // Optional, for future scalability
+    yearsOfExperience: { type: Number, default: 0 }, // Optional
   },
   { timestamps: true }
 );

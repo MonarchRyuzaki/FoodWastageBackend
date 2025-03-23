@@ -5,6 +5,7 @@ import Farmer from "../models/Farmer.js";
 import NGO from "../models/NGO.js";
 import User from "../models/User.js";
 import { validateLogin, validateRegistration } from "../utils/validateAuth.js";
+import { validateFarmer } from "../utils/validateRolesRegistration.js";
 
 const handleRegister = async (req, res) => {
   try {
@@ -61,24 +62,19 @@ const handleLogin = async (req, res) => {
 };
 
 const handleApplyFarmer = async (req, res) => {
+  const { error } = validateFarmer(req.body);
+  if (error) {
+    return res.status(400).json({ error: error.details[0].message });
+  }
   try {
     const {
+      farmName,
       farmAddress,
       farmSize,
       farmType,
-      farmProduce,
-      farmProduceQuantity,
-      farmProducePrice,
-      farmProduceImage,
-      farmProduceDescription,
-      farmProduceAvailability,
-      farmProduceDelivery,
-      farmProduceDeliveryFee,
-      farmProduceDeliveryTime,
-      farmProducePaymentMethod,
-      farmProducePaymentDetails,
-      farmProducePaymentProof,
       idProof,
+      cropsGrown,
+      yearsOfExperience,
     } = req.body;
     const user = await User.findById(req.user.id).exec();
     if (!user) return res.status(404).json({ message: "User not found" });
@@ -88,22 +84,13 @@ const handleApplyFarmer = async (req, res) => {
     // Farmer Verification Logic
 
     const farmDetails = {
+      farmName,
       farmAddress,
       farmSize,
       farmType,
-      farmProduce,
-      farmProduceQuantity,
-      farmProducePrice,
-      farmProduceImage,
-      farmProduceDescription,
-      farmProduceAvailability,
-      farmProduceDelivery,
-      farmProduceDeliveryFee,
-      farmProduceDeliveryTime,
-      farmProducePaymentMethod,
-      farmProducePaymentDetails,
-      farmProducePaymentProof,
       idProof,
+      cropsGrown,
+      yearsOfExperience,
     };
     user.role.push("farmer");
     const farmer = new Farmer({ ...farmDetails, userId: user._id });

@@ -17,3 +17,10 @@
 │── .gitignore
 │── package.json
 │── README.md
+
+
+{
+  "email": "john@example1.com",
+  "password": "ASBCASDasdsad123$"
+}
+"token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3ZGY5NmFkNWM0MGE5MDE3ZjgyZTM4MiIsImVtYWlsIjoiam9obkBleGFtcGxlMS5jb20iLCJyb2xlcyI6WyJjdXN0b21lciJdLCJpYXQiOjE3NDI3MDc1NzUsImV4cCI6MTc0Mjc5Mzk3NX0.8O0xeOQJNzKffJ1hSgM_g3lAHRaNyd5T6wf5_qMEjpQ",
