@@ -28,8 +28,11 @@ export const validateFarmer = (data) => {
     idProof: Joi.string()
       .uri()
       .required()
-      .pattern(new RegExp(/^https?:\/\/.*\.(jpg|jpeg|png|pdf)$/))
-      .message("idProof must be a valid URL pointing to a valid image or PDF."),
+      .pattern(new RegExp(/^https?:\/\/.*\.(jpg|jpeg|png)$/))
+      .message(
+        "idProof must be a valid URL pointing to an image (JPG, JPEG, PNG)."
+      ),
+
     cropsGrown: Joi.array().items(Joi.string().max(50)).optional(),
     yearsOfExperience: Joi.number().min(0).max(100).optional(),
     verified: Joi.boolean().optional(),
@@ -37,5 +40,3 @@ export const validateFarmer = (data) => {
 
   return schema.validate(data);
 };
-
-

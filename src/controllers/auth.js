@@ -1,5 +1,6 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import { uploadToCloudinary } from "../config/cloudinary.js";
 import EventHost from "../models/EventHost.js";
 import Farmer from "../models/Farmer.js";
 import NGO from "../models/NGO.js";
@@ -62,20 +63,28 @@ const handleLogin = async (req, res) => {
 };
 
 const handleApplyFarmer = async (req, res) => {
-  const { error } = validateFarmer(req.body);
-  if (error) {
-    return res.status(400).json({ error: error.details[0].message });
-  }
   try {
+    if (!req.file) {
+      return res.status(400).json({ error: "ID Proof is required" });
+    }
     const {
       farmName,
       farmAddress,
       farmSize,
       farmType,
-      idProof,
       cropsGrown,
       yearsOfExperience,
     } = req.body;
+
+    req.body.idProof = await uploadToCloudinary(
+      req.file.buffer,
+      "farmer-id-proof"
+    );
+
+    const { error } = validateFarmer(req.body);
+    if (error) {
+      return res.status(400).json({ error: error.details[0].message });
+    }
     const user = await User.findById(req.user.id).exec();
     if (!user) return res.status(404).json({ message: "User not found" });
     if (user.role.includes("farmer"))
@@ -88,7 +97,7 @@ const handleApplyFarmer = async (req, res) => {
       farmAddress,
       farmSize,
       farmType,
-      idProof,
+      idProof: req.body.idProof,
       cropsGrown,
       yearsOfExperience,
     };
