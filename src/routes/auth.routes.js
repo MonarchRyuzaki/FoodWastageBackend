@@ -32,7 +32,7 @@ router.post(
   idProofUpload,
   handleApplyNGORole
 );
-router.post("/user/roles/:userId", getRoles);
+router.get("/user/roles/:userId", getRoles);
 
 router.get("/", (req, res) => {
   res.send("Auth route works!");

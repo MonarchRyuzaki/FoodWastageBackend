@@ -1,6 +1,7 @@
 import Joi from "joi";
 import mongoose from "mongoose";
 
+// Farmer Validation
 export const validateFarmer = (data) => {
   const schema = Joi.object({
     userId: Joi.string()
