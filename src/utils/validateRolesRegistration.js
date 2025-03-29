@@ -26,13 +26,20 @@ export const validateFarmer = (data) => {
         )
       )
       .required(),
-    idProof: Joi.string()
-      .uri()
-      .required()
-      .pattern(new RegExp(/^https?:\/\/.*\.(jpg|jpeg|png)$/))
-      .message(
-        "idProof must be a valid URL pointing to an image (JPG, JPEG, PNG)."
-      ),
+    idProof: Joi.object({
+      url: Joi.string()
+        .uri()
+        .required()
+        .pattern(/^https?:\/\/.*\.(jpg|jpeg|png|pdf)$/)
+        .messages({
+          "string.pattern.base":
+            "idProof URL must be a valid URL pointing to a JPG, JPEG, PNG, or PDF.",
+          "any.required": "ID Proof URL is required.",
+        }),
+      public_id: Joi.string().required().messages({
+        "any.required": "ID Proof public_id is required.",
+      }),
+    }),
 
     cropsGrown: Joi.array().items(Joi.string().max(50)).optional(),
     yearsOfExperience: Joi.number().min(0).max(100).optional(),
@@ -81,15 +88,20 @@ export const validateEventHost = (data) => {
         "string.pattern.base": "ZIP code must be exactly 6 digits.",
         "any.required": "ZIP code is required.",
       }),
-    idProof: Joi.string()
-      .uri()
-      .required()
-      .pattern(/^https?:\/\/.*\.(jpg|jpeg|png)$/)
-      .messages({
-        "string.pattern.base":
-          "idProof must be a valid URL pointing to a JPG, JPEG, PNG, or PDF.",
-        "any.required": "ID Proof is required.",
+    idProof: Joi.object({
+      url: Joi.string()
+        .uri()
+        .required()
+        .pattern(/^https?:\/\/.*\.(jpg|jpeg|png|pdf)$/)
+        .messages({
+          "string.pattern.base":
+            "idProof URL must be a valid URL pointing to a JPG, JPEG, PNG, or PDF.",
+          "any.required": "ID Proof URL is required.",
+        }),
+      public_id: Joi.string().required().messages({
+        "any.required": "ID Proof public_id is required.",
       }),
+    }),
     status: Joi.string()
       .valid("pending", "approved", "rejected")
       .default("pending")
@@ -110,15 +122,20 @@ export const validateNGO = (data) => {
     registrationNumber: Joi.string().required().messages({
       "string.empty": "Registration number is required.",
     }),
-    registrationProof: Joi.string()
-      .uri()
-      .required()
-      .pattern(/^https?:\/\/.*\.(jpg|jpeg|png|pdf)$/)
-      .messages({
-        "string.pattern.base":
-          "Registration proof must be a valid URL pointing to a JPG, JPEG, PNG, or PDF.",
-        "any.required": "Registration proof is required.",
+    registrationProof: Joi.object({
+      url: Joi.string()
+        .uri()
+        .required()
+        .pattern(/^https?:\/\/.*\.(jpg|jpeg|png|pdf)$/)
+        .messages({
+          "string.pattern.base":
+            "registrationProof URL must be a valid URL pointing to a JPG, JPEG, PNG, or PDF.",
+          "any.required": "ID Proof URL is required.",
+        }),
+      public_id: Joi.string().required().messages({
+        "any.required": "ID Proof public_id is required.",
       }),
+    }),
     name: Joi.string().min(3).max(100).required().messages({
       "string.empty": "NGO name is required.",
       "string.min": "NGO name must be at least 3 characters.",

@@ -71,17 +71,25 @@ const handleApplyFarmer = async (req, res) => {
     if (!req.file) {
       return res.status(400).json({ error: "ID Proof is required" });
     }
-
-    req.body.idProof = await uploadToCloudinary(
+    const farmerData = {
+      userId: req.user.id,
+      farmName: req.body.farmName,
+      farmAddress: req.body.farmAddress,
+      farmSize: req.body.farmSize,
+      farmType: req.body.farmType,
+      cropsGrown: req.body.cropsGrown,
+      yearsOfExperience: req.body.yearsOfExperience,
+    };
+    farmerData.idProof = await uploadToCloudinary(
       req.file.buffer,
       "farmer-id-proof"
-    ).url;
+    );
 
-    const { error } = validateFarmer(req.body);
+    const { error } = validateFarmer(farmerData);
     if (error) {
       return res.status(400).json({ error: error.details[0].message });
     }
-    const user = await User.findById(req.user.id).exec();
+    const user = await User.findById(farmerData.userId).exec();
     if (!user) return res.status(404).json({ message: "User not found" });
     if (user.role.includes("farmer"))
       return res.status(401).json({ message: "User is already a farmer" });
@@ -89,11 +97,16 @@ const handleApplyFarmer = async (req, res) => {
     // Farmer Verification Logic
 
     user.role.push("farmer");
-    const farmer = new Farmer({ ...req.body, userId: user._id });
+    const farmer = new Farmer(farmerData);
     await user.save();
     await farmer.save();
 
-    res.status(201).json({ message: "Farmer role added successfully" });
+    const token = jwt.sign(
+      { id: user._id, email: user.email, roles: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: "1d" }
+    );
+    res.status(201).json({ token, message: "Farmer role added successfully" });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -104,17 +117,27 @@ const handleApplyEventHost = async (req, res) => {
     if (!req.file) {
       return res.status(400).json({ error: "ID Proof is required" });
     }
-    const user = await User.findById(req.user.id).exec();
+    const eventHostData = {
+      userId: req.user.id,
+      organization: req.body.organization,
+      phone: req.body.phone,
+      email: req.body.email,
+      address: req.body.address,
+      city: req.body.city,
+      state: req.body.state,
+      zip: req.body.zip,
+    };
+    const user = await User.findById(eventHostData.userId).exec();
     if (!user) return res.status(404).json({ error: "User not found" });
     if (user.role.includes("event_host"))
       return res.status(401).json({ error: "User is already an event host" });
 
-    req.body.idProof = await uploadToCloudinary(
+    eventHostData.idProof = await uploadToCloudinary(
       req.file.buffer,
       "event_host-id-proof"
-    ).url;
+    );
 
-    const { error } = validateEventHost(req.body);
+    const { error } = validateEventHost(eventHostData);
     if (error) {
       return res.status(400).json({ error: error.details[0].message });
     }
@@ -122,14 +145,17 @@ const handleApplyEventHost = async (req, res) => {
     // Event Host Verification Logic
 
     user.role.push("event_host");
-    const eventHost = new EventHost({
-      ...req.body,
-      userId: user._id,
-    });
+    const eventHost = new EventHost(eventHostData);
     await user.save();
     await eventHost.save();
 
+    const token = jwt.sign(
+      { id: user._id, email: user.email, roles: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: "1d" }
+    );
     res.status(201).json({
+      token,
       message: "Event Host role added successfully",
     });
   } catch (err) {
@@ -142,17 +168,27 @@ const handleApplyNGORole = async (req, res) => {
     if (!req.file) {
       return res.status(400).json({ error: "Registraion Proof is required" });
     }
+    const ngoData = {
+      userId: req.user.id,
+      registrationNumber: req.body.registrationNumber,
+      name: req.body.name,
+      cause: req.body.cause,
+      email: req.body.email,
+      phone: req.body.phone,
+      address: req.body.address,
+      description: req.body.description,
+    };
     const user = await User.findById(req.user.id).exec();
     if (!user) return res.status(404).json({ error: "User not found" });
     if (user.role.includes("ngo"))
       return res.status(401).json({ error: "User is already an NGO" });
 
-    req.body.registrationProof = await uploadToCloudinary(
+    ngoData.registrationProof = await uploadToCloudinary(
       req.file.buffer,
       "ngo-registration-proof"
-    ).url;
+    );
 
-    const { error } = validateNGO(req.body);
+    const { error } = validateNGO(ngoData);
     if (error) {
       return res.status(400).json({ error: error.details[0].message });
     }
@@ -160,14 +196,16 @@ const handleApplyNGORole = async (req, res) => {
     // NGO Verification Logic
 
     user.role.push("ngo");
-    const ngo = new NGO({
-      ...req.body,
-      userId: user._id,
-    });
+    const ngo = new NGO(ngoData);
 
+    const token = jwt.sign(
+      { id: user._id, email: user.email, roles: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: "1d" }
+    );
     await user.save();
     await ngo.save();
-    res.status(201).json({ message: "NGO role added successfully" });
+    res.status(201).json({ token, message: "NGO role added successfully" });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
