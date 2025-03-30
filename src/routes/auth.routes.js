@@ -1,5 +1,5 @@
 import express from "express";
-import idProofUpload from "../config/multer.js";
+import { idProofUpload } from "../config/multer.js";
 import {
   getRoles,
   handleApplyEventHost,

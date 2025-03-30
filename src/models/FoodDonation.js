@@ -29,10 +29,16 @@ const foodDonationSchema = new mongoose.Schema(
       type: Number,
       required: true,
     },
-    foodImage: {
-      type: [String],
-      required: true,
-    },
+    foodImage: [{
+      url: {
+        type: String,
+        required: true,
+      },
+      public_id: {
+        type: String,
+        required: true,
+      },
+    }],
     address: {
       type: String,
       required: true,
