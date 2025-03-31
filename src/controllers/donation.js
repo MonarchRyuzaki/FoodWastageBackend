@@ -1,7 +1,7 @@
 import { uploadToCloudinary } from "../config/cloudinary.js";
 import FoodDonation from "../models/FoodDonation.js";
 import User from "../models/User.js";
-import { validateDonationData } from "../utils/validateDonation.js";
+import validateDonationData from "../utils/validateDonation.js";
 
 export const createFoodDonation = async (req, res) => {
   try {
