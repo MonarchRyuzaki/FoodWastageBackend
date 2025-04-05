@@ -3,7 +3,7 @@ import FoodDonation from '../models/FoodDonation.js';
 import Claim from '../models/Claim.js';
 
 export const startExpireDonationsJob = () => {
-  cron.schedule('* * * * *', async () => {
+  cron.schedule("*/5 * * * *", async () => {
     try {
       const expiredDonations = await FoodDonation.find({
         status: { $nin: ['expired', 'delivered'] },

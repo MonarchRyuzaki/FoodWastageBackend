@@ -3,7 +3,7 @@ import Claim from '../models/Claim.js';
 import FoodDonation from '../models/FoodDonation.js';
 
 export const startExpireClaimsJob = () => {
-  cron.schedule('* * * * *', async () => {
+  cron.schedule("*/5 * * * *", async () => {
     try {
       const expiredClaims = await Claim.find({
         status: 'pending',
