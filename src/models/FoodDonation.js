@@ -10,7 +10,7 @@ const foodDonationSchema = new mongoose.Schema(
     status: {
       type: String,
       required: true,
-      enum: ["available", "claimed", "delivered"],
+      enum: ["available", "claimed", "delivered", "expired"],
       default: "available",
     },
     foodTitle: {

@@ -27,7 +27,12 @@ const farmerSchema = new mongoose.Schema(
         required: true,
       },
     },
-    verified: { type: Boolean, default: false }, // For verification status
+    status: {
+      type: String,
+      required: true,
+      enum: ["pending", "approved", "rejected"],
+      default: "pending",
+    }, // For verification status
     cropsGrown: [{ type: String }], // Optional, for future scalability
     yearsOfExperience: { type: Number, default: 0 }, // Optional
   },

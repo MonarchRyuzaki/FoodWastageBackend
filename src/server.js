@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import app from "./app.js";
+import { startBackgroundJobs } from "./cronJobs/index.js";
 
 const PORT = process.env.PORT || 5000;
 
@@ -16,4 +17,5 @@ app.listen(PORT, () => {
   // Call the function to connect
   connectToDatabase();
   console.log(`🚀 Server running on http://localhost:${PORT}`);
+  startBackgroundJobs(); // 🎶 Let the watchers awaken
 });

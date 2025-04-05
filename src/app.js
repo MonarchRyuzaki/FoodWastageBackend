@@ -9,6 +9,7 @@ dotenv.config({
 
 import authRoutes from "./routes/auth.routes.js";
 import foodDonationRoutes from "./routes/donation.routes.js";
+import claimRoutes from "./routes/claims.routes.js";
 
 const app = express();
 
@@ -20,8 +21,10 @@ app.use(morgan("dev"));
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/food-donations", foodDonationRoutes);
+app.use("/api/claims", claimRoutes);
 app.get("/", (req, res) => {
   res.send("API is running...");
 });
 
 export default app;
+

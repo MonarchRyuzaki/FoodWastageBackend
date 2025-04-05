@@ -58,7 +58,7 @@ export const createFoodDonation = async (req, res) => {
 
 export const getFoodDonation = async (req, res) => {
   try {
-    const donations = await FoodDonation.find().exec();
+    const donations = await FoodDonation.find({status: "available"}).exec();
     res.json({ donations });
   } catch (err) {
     res.status(500).json({ error: err.message });
