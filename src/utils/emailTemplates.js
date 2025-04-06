@@ -38,3 +38,25 @@ export const claimSuccessEmailTemplate = (name, donationTitle) => ({
       <p>Check your dashboard for pickup or delivery details. Thank you for being part of this mission!</p>
     `,
 });
+
+export const claimCancelEmailTemplate = ({ name, donationTitle, reason }) => {
+  return {
+    subject: `Your Claim on "${donationTitle}" Has Been Cancelled`,
+    html: `
+      <div style="font-family: Arial, sans-serif; padding: 20px;">
+        <h2 style="color: #d9534f;">Claim Cancelled</h2>
+        <p>Dear ${name},</p>
+
+        <p>We regret to inform you that your claim for the food donation titled <strong>"${donationTitle}"</strong> has been <strong>cancelled</strong>.</p>
+
+        ${reason ? `<p><strong>Reason:</strong> ${reason}</p>` : ""}
+
+        <p>If this was unexpected or you have any questions, feel free to reach out to our support team.</p>
+
+        <p style="margin-top: 30px;">Thank you for being part of our effort to reduce food waste and support communities in need.</p>
+
+        <p>Warm regards,<br/>The FoodLink Team</p>
+      </div>
+    `,
+  };
+};

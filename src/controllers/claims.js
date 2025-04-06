@@ -2,7 +2,7 @@ import Claim from "../models/Claim.js";
 import FoodDonation from "../models/FoodDonation.js";
 import { isBufferExpired } from "../utils/checkBufferExpiry.js";
 import { sendEmail } from "../utils/email.js";
-import { claimSuccessEmailTemplate, otpEmailTemplate } from "../utils/emailTemplates.js";
+import { claimCancelEmailTemplate, claimSuccessEmailTemplate, otpEmailTemplate } from "../utils/emailTemplates.js";
 import { generateOtp } from "../utils/generateOTP.js";
 
 export const claimDonation = async (req, res) => {
@@ -49,7 +49,6 @@ export const claimDonation = async (req, res) => {
     res.status(200).json({
       message: "Food donation claimed successfully",
       claimedBy: { ngoId: claim.ngoId },
-      otp,
     });
   } catch (err) {
     res.status(500).json({ error: "Server error." });
@@ -121,6 +120,17 @@ export const cancelClaim = async (req, res) => {
         .status(400)
         .json({ error: "Claim not found or not cancellable." });
     }
+
+    const {subject, text, html} = claimCancelEmailTemplate(
+      req.user.name,
+      donation.title
+    );
+    sendEmail({
+      to: req.user.email,
+      subject,
+      text,
+      html,
+    });
 
     const donation = await FoodDonation.findById(claim.donationId);
     donation.status = "available";
