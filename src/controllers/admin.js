@@ -77,6 +77,26 @@ export const updateApplicationStatus = async (req, res) => {
       return res.status(404).json({ error: "Application not found." });
     }
 
+    if (status === "approved") {
+      const {subject, text, html} = approvalEmailTemplate(application.name, role);
+      sendEmail({
+        to: application.email,
+        subject,
+        text,
+        html,
+      });
+    }
+
+    if (status === "rejected") {
+      const {subject, text, html} = rejectionEmailTemplate(application.name, role);
+      sendEmail({
+        to: application.email,
+        subject,
+        text,
+        html,
+      });
+    }
+
     application.status = status;
     await application.save();
 

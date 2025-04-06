@@ -48,7 +48,7 @@ const handleLogin = async (req, res) => {
     const user = await User.findOne({ email }).exec();
 
     const token = jwt.sign(
-      { id: user._id, email: user.email, roles: user.role },
+      { id: user._id, name: user.name, email: user.email, roles: user.role },
       process.env.JWT_SECRET,
       { expiresIn: "1d" }
     );
@@ -101,6 +101,12 @@ const handleApplyFarmer = async (req, res) => {
     await user.save();
     await farmer.save();
 
+    // TODO: Set status as "pending" instead of auto-approving.
+    // This will need frontend update — currently skipping admin approval for flow continuity.
+    // Reminder added to todo.txt
+    // TODO: Once status flow is fixed to "pending", send waiting email here.
+    // Use mailer.sendPendingRoleEmail(user.email, user.name);
+
     const token = jwt.sign(
       { id: user._id, email: user.email, roles: user.role },
       process.env.JWT_SECRET,
@@ -143,6 +149,12 @@ const handleApplyEventHost = async (req, res) => {
     }
 
     // Event Host Verification Logic
+
+    // TODO: Set status as "pending" instead of auto-approving.
+    // This will need frontend update — currently skipping admin approval for flow continuity.
+    // Reminder added to todo.txt
+    // TODO: Once status flow is fixed to "pending", send waiting email here.
+    // Use mailer.sendPendingRoleEmail(user.email, user.name);
 
     user.role.push("event_host");
     const eventHost = new EventHost(eventHostData);
@@ -194,6 +206,12 @@ const handleApplyNGORole = async (req, res) => {
     }
 
     // NGO Verification Logic
+
+    // TODO: Set status as "pending" instead of auto-approving.
+    // This will need frontend update — currently skipping admin approval for flow continuity.
+    // Reminder added to todo.txt
+    // TODO: Once status flow is fixed to "pending", send waiting email here.
+    // Use mailer.sendPendingRoleEmail(user.email, user.name);
 
     user.role.push("ngo");
     const ngo = new NGO(ngoData);

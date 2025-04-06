@@ -1,6 +1,8 @@
 import Claim from "../models/Claim.js";
 import FoodDonation from "../models/FoodDonation.js";
 import { isBufferExpired } from "../utils/checkBufferExpiry.js";
+import { sendEmail } from "../utils/email.js";
+import { claimSuccessEmailTemplate, otpEmailTemplate } from "../utils/emailTemplates.js";
 import { generateOtp } from "../utils/generateOTP.js";
 
 export const claimDonation = async (req, res) => {
@@ -31,6 +33,14 @@ export const claimDonation = async (req, res) => {
       bufferExpiryTime,
       otp,
       status: "pending",
+    });
+
+    const { subject, text, html } = otpEmailTemplate(req.user.name, otp);
+    sendEmail({
+      to: req.user.email,
+      subject,
+      text,
+      html,
     });
 
     donation.status = "claimed";
@@ -78,6 +88,17 @@ export const verifyOtp = async (req, res) => {
     const donation = await FoodDonation.findById(donationId);
     donation.status = "delivered";
     await donation.save();
+
+    const {subject, text, html} = claimSuccessEmailTemplate(
+      req.user.name,
+      donation.title
+    );
+    sendEmail({
+      to: req.user.email,
+      subject,
+      text,
+      html,
+    });
 
     res.status(200).json({
       message: "Claim verified successfully. Donation marked as delivered.",

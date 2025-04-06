@@ -1,0 +1,11 @@
+[ ] Change role application logic to keep status as "pending" instead of auto-approving.
+    - Reason: Avoid bypassing admin review process.
+    - File: controllers/auth.js (or wherever it's located)
+    - Reminder: Update frontend to reflect "pending" status flow before changing.
+    - Priority: Medium
+
+[ ] Send email upon role application to inform user:
+    - Message: “Your application is under review. You’ll be notified once it’s approved/rejected.”
+    - Can use existing email utility (email.js or similar)
+    - Add after status is set to "pending"
+    - Priority: Low (can wait until the status flow is changed)
