@@ -189,6 +189,11 @@ const handleApplyNGORole = async (req, res) => {
       phone: req.body.phone,
       address: req.body.address,
       description: req.body.description,
+      latitude: req.body.latitude,
+      longitude: req.body.longitude,
+      prefersFoodType: req.body.prefersFoodType,
+      rejectsFoodType: req.body.rejectsFoodType,
+      avoidsAllergen: req.body.avoidsAllergen,
     };
     const user = await User.findById(req.user.id).exec();
     if (!user) return res.status(404).json({ error: "User not found" });
