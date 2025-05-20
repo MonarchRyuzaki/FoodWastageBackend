@@ -2,35 +2,24 @@ import express from "express";
 import { idProofUpload } from "../config/multer.js";
 import {
   getRoles,
-  handleApplyEventHost,
-  handleApplyFarmer,
-  handleApplyNGORole,
+  handleNGORegister,
   handleLogin,
   handleRegister,
+  handleNGOLogin
 } from "../controllers/auth.js";
-import { verifyAuthToken } from "../middlewares/auth.js";
 
 const router = express.Router();
 
 router.post("/register", handleRegister);
 router.post("/login", handleLogin);
 router.post(
-  "/user/apply-farmer",
-  verifyAuthToken,
+  "/register-ngo",
   idProofUpload,
-  handleApplyFarmer
+  handleNGORegister
 );
 router.post(
-  "/user/apply-event-host",
-  verifyAuthToken,
-  idProofUpload,
-  handleApplyEventHost
-);
-router.post(
-  "/user/apply-ngo",
-  verifyAuthToken,
-  idProofUpload,
-  handleApplyNGORole
+  "/login-ngo",
+  handleNGOLogin
 );
 router.get("/user/roles/:userId", getRoles);
 

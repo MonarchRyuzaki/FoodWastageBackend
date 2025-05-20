@@ -1,11 +1,7 @@
-import EventHost from "../models/EventHost.js";
-import Farmer from "../models/Farmer.js";
 import NGO from "../models/NGO.js";
 
 const roleModelMap = {
-  farmer: Farmer,
   ngo: NGO,
-  event_host: EventHost,
 };
 
 // Utility to get the model based on role

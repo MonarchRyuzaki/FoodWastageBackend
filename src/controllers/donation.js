@@ -5,9 +5,6 @@ import validateDonationData from "../utils/validateDonation.js";
 
 export const createFoodDonation = async (req, res) => {
   try {
-    if (!req.user.roles.includes("event_host")) {
-      return res.status(403).json({ error: "User is not an event host" });
-    }
     if (!req.files || req.files.length === 0) {
       return res
         .status(400)

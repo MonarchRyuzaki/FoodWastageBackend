@@ -17,5 +17,5 @@ app.listen(PORT, () => {
   // Call the function to connect
   connectToDatabase();
   console.log(`🚀 Server running on http://localhost:${PORT}`);
-  startBackgroundJobs(); // 🎶 Let the watchers awaken
+  startBackgroundJobs();
 });

@@ -1,36 +1,50 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { uploadToCloudinary } from "../config/cloudinary.js";
-import EventHost from "../models/EventHost.js";
-import Farmer from "../models/Farmer.js";
 import NGO from "../models/NGO.js";
 import User from "../models/User.js";
-import { validateLogin, validateRegistration } from "../utils/validateAuth.js";
+import { insertNewDonor } from "../sparql/creatingNewDonor.js";
+import { insertNewNGO } from "../sparql/creatingNewNGO.js";
 import {
-  validateEventHost,
-  validateFarmer,
+  checkAlreadyRegistered,
+  validateLogin,
+} from "../utils/validateAuth.js";
+import {
+  validateDonor,
   validateNGO,
 } from "../utils/validateRolesRegistration.js";
 
+const Models = [User, NGO];
+
 const handleRegister = async (req, res) => {
   try {
-    const { name, email, password, phone, address } = req.body;
-    const validationResult = await validateRegistration(req, res);
-    console.log(validationResult);
-    if (validationResult.error) {
-      return res.status(400).json({ error: validationResult.error });
-    }
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
-
-    const newUser = new User({
+    const donorData = {
       name,
       email,
-      password: hashedPassword,
+      password,
       phone,
       address,
-    });
+      city,
+      state,
+    };
+    const { error } = validateDonor(donorData);
+    if (error) {
+      return res.status(400).json({ error: error.details[0].message });
+    }
+    for (const Model of Models) {
+      const { error } = await checkAlreadyRegistered(email, Model);
+      if (error) {
+        return res.status(400).json({ error });
+      }
+    }
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(donorData.password, salt);
+    donorData.password = hashedPassword;
+    const newUser = new User(donorData);
     await newUser.save();
+    await insertNewDonor({
+      mongoID: newUser._id,
+    });
 
     res.status(201).json({ message: "User registered successfully." });
   } catch (err) {
@@ -40,15 +54,13 @@ const handleRegister = async (req, res) => {
 
 const handleLogin = async (req, res) => {
   try {
-    const { email, password } = req.body;
-    const validationResult = await validateLogin(req, res);
+    const validationResult = await validateLogin(req, res, User);
     if (validationResult.error) {
       return res.status(400).json({ error: validationResult.error });
     }
-    const user = await User.findOne({ email }).exec();
-
+    const user = validationResult.user;
     const token = jwt.sign(
-      { id: user._id, name: user.name, email: user.email, roles: user.role },
+      { id: user._id, name: user.name, email: user.email, role: "Donor" },
       process.env.JWT_SECRET,
       { expiresIn: "1d" }
     );
@@ -66,140 +78,32 @@ const handleLogin = async (req, res) => {
   }
 };
 
-const handleApplyFarmer = async (req, res) => {
+const handleNGORegister = async (req, res) => {
   try {
     if (!req.file) {
-      return res.status(400).json({ error: "ID Proof is required" });
-    }
-    const farmerData = {
-      userId: req.user.id,
-      farmName: req.body.farmName,
-      farmAddress: req.body.farmAddress,
-      farmSize: req.body.farmSize,
-      farmType: req.body.farmType,
-      cropsGrown: req.body.cropsGrown,
-      yearsOfExperience: req.body.yearsOfExperience,
-    };
-    farmerData.idProof = await uploadToCloudinary(
-      req.file.buffer,
-      "farmer-id-proof"
-    );
-
-    const { error } = validateFarmer(farmerData);
-    if (error) {
-      return res.status(400).json({ error: error.details[0].message });
-    }
-    const user = await User.findById(farmerData.userId).exec();
-    if (!user) return res.status(404).json({ message: "User not found" });
-    if (user.role.includes("farmer"))
-      return res.status(401).json({ message: "User is already a farmer" });
-
-    // Farmer Verification Logic
-
-    user.role.push("farmer");
-    const farmer = new Farmer(farmerData);
-    await user.save();
-    await farmer.save();
-
-    // TODO: Set status as "pending" instead of auto-approving.
-    // This will need frontend update — currently skipping admin approval for flow continuity.
-    // Reminder added to todo.txt
-    // TODO: Once status flow is fixed to "pending", send waiting email here.
-    // Use mailer.sendPendingRoleEmail(user.email, user.name);
-
-    const token = jwt.sign(
-      { id: user._id, email: user.email, roles: user.role },
-      process.env.JWT_SECRET,
-      { expiresIn: "1d" }
-    );
-    res.status(201).json({ token, message: "Farmer role added successfully" });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-};
-
-const handleApplyEventHost = async (req, res) => {
-  try {
-    if (!req.file) {
-      return res.status(400).json({ error: "ID Proof is required" });
-    }
-    const eventHostData = {
-      userId: req.user.id,
-      organization: req.body.organization,
-      phone: req.body.phone,
-      email: req.body.email,
-      address: req.body.address,
-      city: req.body.city,
-      state: req.body.state,
-      zip: req.body.zip,
-    };
-    const user = await User.findById(eventHostData.userId).exec();
-    if (!user) return res.status(404).json({ error: "User not found" });
-    if (user.role.includes("event_host"))
-      return res.status(401).json({ error: "User is already an event host" });
-
-    eventHostData.idProof = await uploadToCloudinary(
-      req.file.buffer,
-      "event_host-id-proof"
-    );
-
-    const { error } = validateEventHost(eventHostData);
-    if (error) {
-      return res.status(400).json({ error: error.details[0].message });
-    }
-
-    // Event Host Verification Logic
-
-    // TODO: Set status as "pending" instead of auto-approving.
-    // This will need frontend update — currently skipping admin approval for flow continuity.
-    // Reminder added to todo.txt
-    // TODO: Once status flow is fixed to "pending", send waiting email here.
-    // Use mailer.sendPendingRoleEmail(user.email, user.name);
-
-    user.role.push("event_host");
-    const eventHost = new EventHost(eventHostData);
-    await user.save();
-    await eventHost.save();
-
-    const token = jwt.sign(
-      { id: user._id, email: user.email, roles: user.role },
-      process.env.JWT_SECRET,
-      { expiresIn: "1d" }
-    );
-    res.status(201).json({
-      token,
-      message: "Event Host role added successfully",
-    });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-};
-
-const handleApplyNGORole = async (req, res) => {
-  try {
-    if (!req.file) {
-      return res.status(400).json({ error: "Registraion Proof is required" });
+      return res.status(400).json({ error: "Registration Proof is required" });
     }
     const ngoData = {
-      userId: req.user.id,
       registrationNumber: req.body.registrationNumber,
+      password: req.body.password,
       name: req.body.name,
       cause: req.body.cause,
       email: req.body.email,
       phone: req.body.phone,
       address: req.body.address,
       description: req.body.description,
-      latitude: req.body.latitude,
-      longitude: req.body.longitude,
+      city: req.body.city,
+      state: req.body.state,
       prefersFoodType: req.body.prefersFoodType,
       rejectsFoodType: req.body.rejectsFoodType,
       avoidsAllergen: req.body.avoidsAllergen,
     };
-    const user = await User.findById(req.user.id).exec();
-    if (!user) return res.status(404).json({ error: "User not found" });
-    if (user.role.includes("ngo"))
-      return res.status(401).json({ error: "User is already an NGO" });
-
+    for (const Model of Models) {
+      const { error } = await checkAlreadyRegistered(email, Model);
+      if (error) {
+        return res.status(400).json({ error });
+      }
+    }
     ngoData.registrationProof = await uploadToCloudinary(
       req.file.buffer,
       "ngo-registration-proof"
@@ -209,7 +113,10 @@ const handleApplyNGORole = async (req, res) => {
     if (error) {
       return res.status(400).json({ error: error.details[0].message });
     }
-
+    
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(ngoData.password, salt);
+    ngoData.password = hashedPassword;
     // NGO Verification Logic
 
     // TODO: Set status as "pending" instead of auto-approving.
@@ -218,17 +125,43 @@ const handleApplyNGORole = async (req, res) => {
     // TODO: Once status flow is fixed to "pending", send waiting email here.
     // Use mailer.sendPendingRoleEmail(user.email, user.name);
 
-    user.role.push("ngo");
     const ngo = new NGO(ngoData);
+    ngo.status = "approved"; // Set status to approved for now
+    await ngo.save();
+    await insertNewNGO({
+      mongoID: ngo._id,
+      prefersFoodType: ngoData.prefersFoodType,
+      rejectsFoodType: ngoData.rejectsFoodType,
+      avoidsAllergen: ngoData.avoidsAllergen,
+    });
+    res.status(201).json({ token, message: "NGO role added successfully" });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+const handleNGOLogin = async (req, res) => {
+  try {
+    const validationResult = await validateLogin(req, res, NGO);
+    if (validationResult.error) {
+      return res.status(400).json({ error: validationResult.error });
+    }
+    const ngo = validationResult.user;
 
     const token = jwt.sign(
-      { id: user._id, email: user.email, roles: user.role },
+      { id: ngo._id, name: ngo.name, email: ngo.email, role: "NGO" },
       process.env.JWT_SECRET,
       { expiresIn: "1d" }
     );
-    await user.save();
-    await ngo.save();
-    res.status(201).json({ token, message: "NGO role added successfully" });
+    res.status(201).json({
+      token,
+      message: "Login successful",
+      user: {
+        email: ngo.email,
+        role: ngo.role,
+        name: ngo.name,
+      },
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -246,9 +179,8 @@ const getRoles = async (req, res) => {
 
 export {
   getRoles,
-  handleApplyEventHost,
-  handleApplyFarmer,
-  handleApplyNGORole,
   handleLogin,
+  handleNGOLogin,
+  handleNGORegister,
   handleRegister,
 };

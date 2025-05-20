@@ -2,11 +2,6 @@ import mongoose from "mongoose";
 
 const ngoSchema = new mongoose.Schema(
   {
-    userId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-      required: true,
-    },
     registrationNumber: {
       type: String,
       required: true,
@@ -32,12 +27,25 @@ const ngoSchema = new mongoose.Schema(
     email: {
       type: String,
       required: true,
+      unique: true,
+    },
+    password: {
+      type: String,
+      required: true,
     },
     phone: {
       type: String,
       required: true,
     },
     address: {
+      type: String,
+      required: true,
+    },
+    city: {
+      type: String,
+      required: true,
+    },
+    state: {
       type: String,
       required: true,
     },
@@ -49,7 +57,7 @@ const ngoSchema = new mongoose.Schema(
       type: String,
       required: true,
       enum: ["pending", "approved", "rejected"],
-      default: "pending",
+      default: "approved",
     },
   },
   { timestamps: true }

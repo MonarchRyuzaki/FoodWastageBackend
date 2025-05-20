@@ -22,7 +22,11 @@ const foodDonationSchema = new mongoose.Schema(
       required: true,
     },
     foodType: {
-      type: String,
+      type: [String],
+      required: true,
+    },
+    containsAllergens: {
+      type: [String],
       required: true,
     },
     foodQuantity: {

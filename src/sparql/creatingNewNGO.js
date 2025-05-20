@@ -2,13 +2,11 @@ import { createFoodWastageSparqlClient } from "./SparqlClient.js";
 
 const client = createFoodWastageSparqlClient();
 
-const insertNewNGO = async ({
+export const insertNewNGO = async ({
   mongoID,
   prefersFoodType = [],
   rejectsFoodType = [],
   avoidsAllergen = [],
-  latitude,
-  longitude,
 }) => {
   const prefList = prefersFoodType.map((ft) => `:${ft}`).join(", ");
   const rejectList = rejectsFoodType.map((ft) => `:${ft}`).join(", ");
@@ -24,16 +22,11 @@ const insertNewNGO = async ({
     ? `  :avoidsAllergen    ${avoidList} ;`
     : ``;
 
-  const locationIRI = `:${mongoID}_Location`;
-
   const query = `  
 
     INSERT DATA {
-      PREFIX geo:     <http://www.w3.org/2003/01/geo/wgs84_pos#>
       # Create the NGO individual, typed as :NGO (subclass of :User)
       :${mongoID} a :NGO ; ${prefClause} ${rejectClause} ${avoidClause}
-      geo:lat           "${latitude}"^^xsd:decimal ;
-      geo:long          "${longitude}"^^xsd:decimal .
    }
   `;
 
@@ -44,12 +37,3 @@ const insertNewNGO = async ({
     console.error("Error executing query:", error);
   }
 };
-
-await insertNewNGO({
-  mongoID: "abc1234",
-  prefersFoodType: ["Meat", "Fruit"],
-  rejectsFoodType: ["Dairy"],
-  avoidsAllergen: ["Peanut", "Gluten"],
-  latitude: 12.9816,
-  longitude: 77.6946,
-});

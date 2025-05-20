@@ -24,11 +24,13 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    role: {
-      type: [String],
+    city: {
+      type: String,
       required: true,
-      enum: ["farmer", "customer", "ngo", "event_host", "admin"],
-      default: "customer",
+    },
+    state: {
+      type: String,
+      required: true,
     },
   },
   { timestamps: true }
