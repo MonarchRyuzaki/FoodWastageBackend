@@ -1,4 +1,5 @@
 import Joi from "joi";
+import { allergens, foodTypes } from "./foodEnums.js";
 
 const foodDonationValidationSchema = Joi.object({
   userId: Joi.string().required().messages({
@@ -28,10 +29,29 @@ const foodDonationValidationSchema = Joi.object({
     "string.max": "Food description cannot exceed 500 characters.",
   }),
 
-  foodType: Joi.string().valid("Veg", "Non-Veg", "Vegan").required().messages({
-    "any.required": "Food type is required.",
-    "any.only": 'Food type must be "Veg", "Non-Veg", or "Vegan".',
-  }),
+  foodType: Joi.array()
+    .items(Joi.string().valid(...foodTypes))
+    .min(1)
+    .required()
+    .messages({
+      "array.base": "foodType must be an array of strings.",
+      "array.min": "At least one foodType must be provided.",
+      "any.required": "foodType is required.",
+      "any.only": `Each foodType must be one of: ${foodTypes.join(", ")}.`,
+      "string.base": "Each foodType must be a string.",
+    }),
+
+  containsAllergen: Joi.array()
+    .items(Joi.string().valid(...allergens))
+    .min(1)
+    .required()
+    .messages({
+      "array.base": "containsAllergen must be an array of strings.",
+      "array.min": "At least one allergen must be provided.",
+      "any.required": "containsAllergen is required.",
+      "any.only": `Each allergen must be one of: ${allergens.join(", ")}.`,
+      "string.base": "Each allergen must be a string.",
+    }),
 
   foodQuantity: Joi.number().integer().min(1).required().messages({
     "any.required": "Food quantity is required.",
@@ -66,9 +86,30 @@ const foodDonationValidationSchema = Joi.object({
     "string.max": "Address cannot exceed 200 characters.",
   }),
 
+  state: Joi.string().min(2).max(100).required().messages({
+    "any.required": "State is required.",
+    "string.empty": "State cannot be empty.",
+    "string.min": "State must be at least 2 characters.",
+    "string.max": "State cannot exceed 100 characters.",
+  }),
+  city: Joi.string().min(2).max(100).required().messages({
+    "any.required": "City is required.",
+    "string.empty": "City cannot be empty.",
+    "string.min": "City must be at least 2 characters.",
+    "string.max": "City cannot exceed 100 characters.",
+  }),
+  latitude: Joi.number().required().messages({
+    "any.required": "Latitude is required.",
+    "number.base": "Latitude must be a number.",
+  }),
+  longitude: Joi.number().required().messages({
+    "any.required": "Longitude is required.",
+    "number.base": "Longitude must be a number.",
+  }),
+
   expiryDate: Joi.date()
     .greater("now")
-    .max(Date.now() + 2 * 24 * 60 * 60 * 1000) // 2 days from now
+    // .max(Date.now() + 2 * 24 * 60 * 60 * 1000) // 2 days from now
     .required()
     .messages({
       "any.required": "Expiry date is required.",

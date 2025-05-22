@@ -1,5 +1,5 @@
 import { createFoodWastageSparqlClient } from "./SparqlClient.js";
-const client = await createFoodWastageSparqlClient();
+const client = createFoodWastageSparqlClient();
 
 export async function searchDonations({
   ngoLat,
@@ -44,8 +44,10 @@ export async function searchDonations({
       }
     `);
   }
-
-  const distanceClause = `?donation omgeo:nearby(${ngoLat} ${ngoLong} "${maxDistanceKm}km").`;
+  let distanceClause = "";
+  if (ngoLat && ngoLong) {
+    distanceClause = `?donation omgeo:nearby(${ngoLat} ${ngoLong} "${maxDistanceKm}km").`;
+  }
 
   const valueFilters = [];
   if (statusList.length) {
@@ -60,10 +62,10 @@ export async function searchDonations({
   }
 
   // Preference ordering: preferred types first, then distance
-  let orderExpr = "?distanceKm";
+  let orderExpr = (ngoLat && ngoLong) ? "?distanceKm" : "";
   if (prefersFoodType.length) {
     const cond = prefersFoodType.map((t) => `?foodType = :${t}`).join(" || ");
-    orderExpr = `IF(${cond}, 0, 1) ?distanceKm`;
+    orderExpr = `IF(${cond}, 0, 1) ${orderExpr}`;
   }
 
   const sparql = `
@@ -85,50 +87,3 @@ export async function searchDonations({
   const { results } = await client.query(sparql);
   return results.bindings;
 }
-
-// Example usage:
-const results = await searchDonations({
-  ngoLat: 12.9716,
-  ngoLong: 77.5946,
-  maxDistanceKm: 15,
-  status: ["Available", "Claimed"],
-  priority: ["High"],
-  prefersFoodType: ["DiabeticSweets"],
-  rejectsFoodType: [],
-  avoidsAllergens: ["Eggs"],
-});
-console.log("Search Results:", results);
-
-// app.get('/search', async (req, res) => {
-//     const results = await searchDonations({
-//       ngoIri: req.query.ngoIri,
-//       maxDistanceKm: parseFloat(req.query.maxDist) || 10,
-//       status:    req.query.status?.split(','),
-//       priority:  req.query.priority?.split(','),
-//       donor:     req.query.donor?.split(','),
-//       // …etc…
-//     });
-//     res.json(results);
-//   });
-
-// // 1. Insert new Donation in Mongo, get its _id
-// const { insertedId } = await donations.insertOne({ …payload… });
-
-// // 2. Push to GraphDB
-// await sparqlClient.update(`
-//   PREFIX : <http://…/FoodWastageOntology#>
-//   INSERT DATA {
-//     :donation_${insertedId} a :FoodDonation ;
-//       :donationMongoID "${insertedId}" ;
-//       :hasFoodType :Meat ;
-//       … other props …
-//   }
-// `);
-
-// // 3. Later, run your reasoning-driven search…
-// const bindings = await sparqlClient.query( yourDynamicSearchQuery );
-// // e.g. bindings = [ { mongoID: { value: "605c72f4a3" } }, … ]
-
-// // 4. Bulk-fetch from Mongo by ID
-// const ids = bindings.map(b => b.mongoID.value);
-// const docs = await donations.find({ _id: { $in: ids.map(ObjectId) }}).toArray();

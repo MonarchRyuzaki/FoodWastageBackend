@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { allergens, foodTypes } from "../utils/foodEnums.js"
 
 const foodDonationSchema = new mongoose.Schema(
   {
@@ -23,28 +24,55 @@ const foodDonationSchema = new mongoose.Schema(
     },
     foodType: {
       type: [String],
-      required: true,
+      required: [true, "Food type is required"],
+      enum: {
+        values: foodTypes,
+        message: "`{VALUE}` is not a valid food type",
+      },
     },
+
     containsAllergens: {
       type: [String],
-      required: true,
+      required: [true, "Allergen list is required"],
+      enum: {
+        values: allergens,
+        message: "`{VALUE}` is not a recognized allergen",                      
+      },
     },
     foodQuantity: {
       type: Number,
       required: true,
     },
-    foodImage: [{
-      url: {
-        type: String,
-        required: true,
+    foodImage: [
+      {
+        url: {
+          type: String,
+          required: true,
+        },
+        public_id: {
+          type: String,
+          required: true,
+        },
       },
-      public_id: {
-        type: String,
-        required: true,
-      },
-    }],
+    ],
     address: {
       type: String,
+      required: true,
+    },
+    city: {
+      type: String,
+      required: true,
+    },
+    state: {
+      type: String,
+      required: true,
+    },
+    latitude: {
+      type: Number,
+      required: true,
+    },
+    longitude: {
+      type: Number,
       required: true,
     },
     expiryDate: {

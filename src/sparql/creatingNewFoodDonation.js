@@ -2,7 +2,7 @@ import { createFoodWastageSparqlClient } from "./SparqlClient.js";
 
 const client = createFoodWastageSparqlClient();
 
-const insertNewFoodDonation = async ({
+export const insertNewFoodDonation = async ({
   mongoID,
   containsAllergen = [],
   hasFoodType = [],
@@ -58,14 +58,3 @@ const insertNewFoodDonation = async ({
     );
   }
 };
-
-// Example usage:
-await insertNewFoodDonation({
-  mongoID: "test2",
-  containsAllergen: ["Eggs"],
-  hasFoodType: ["DiabeticSweets"],
-  hasExpiryDate: "2025-06-01",
-  latitude: 12.9216,
-  longitude: 77.5966,
-  donorMongoID: "xyzq",
-});
