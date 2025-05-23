@@ -7,9 +7,6 @@ import { generateOtp } from "../utils/generateOTP.js";
 
 export const claimDonation = async (req, res) => {
   try {
-    if (!req.user.role.includes("ngo")) {
-      return res.status(403).json({ error: "User is not an NGO." });
-    }
     const { donationId } = req.params;
     const { deliveryMode, pickupBufferTime } = req.body;
     const ngoId = req.user.id;
@@ -57,9 +54,6 @@ export const claimDonation = async (req, res) => {
 
 export const verifyOtp = async (req, res) => {
   try {
-    if (!req.user.role.includes("ngo")) {
-      return res.status(403).json({ error: "User is not an NGO." });
-    }
     const { donationId } = req.params;
     const { otp } = req.body;
 
@@ -110,9 +104,6 @@ export const verifyOtp = async (req, res) => {
 
 export const cancelClaim = async (req, res) => {
   try {
-    if (!req.user.role.includes("ngo")) {
-      return res.status(403).json({ error: "User is not an NGO." });
-    }
     const { claimId } = req.params;
     const claim = await Claim.findById(claimId);
     if (!claim || claim.status !== "active") {
@@ -149,9 +140,6 @@ export const cancelClaim = async (req, res) => {
 
 export const getClaimsByStatus = async (req, res) => {
   try {
-    if (!req.user.role.includes("ngo")) {
-      return res.status(403).json({ error: "User is not an NGO." });
-    }
     const { status } = req.query;
     const ngoId = req.user.id;
     const claims = await Claim.find({ ngoId, status });
