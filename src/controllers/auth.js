@@ -115,14 +115,14 @@ const handleNGORegister = async (req, res) => {
       }
     }
     const { error } = validateNGO(ngoData);
+    if (error) {
+      return res.status(400).json({ error: error.details[0].message });
+    }
     ngoData.registrationProof = await uploadToCloudinary(
       req.file.buffer,
       "ngo-registration-proof"
     );
 
-    if (error) {
-      return res.status(400).json({ error: error.details[0].message });
-    }
 
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(ngoData.password, salt);
