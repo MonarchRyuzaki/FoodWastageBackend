@@ -43,7 +43,7 @@ const foodDonationValidationSchema = Joi.object({
 
   containsAllergen: Joi.array()
     .items(Joi.string().valid(...allergens))
-    .min(1)
+    .min(0)
     .required()
     .messages({
       "array.base": "containsAllergen must be an array of strings.",

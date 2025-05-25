@@ -46,20 +46,6 @@ export const validateNGO = (data) => {
     registrationNumber: Joi.string().required().messages({
       "string.empty": "Registration number is required.",
     }),
-    registrationProof: Joi.object({
-      url: Joi.string()
-        .uri()
-        .required()
-        .pattern(/^https?:\/\/.*\.(jpg|jpeg|png|pdf)$/)
-        .messages({
-          "string.pattern.base":
-            "registrationProof URL must be a valid URL pointing to a JPG, JPEG, PNG, or PDF.",
-          "any.required": "ID Proof URL is required.",
-        }),
-      public_id: Joi.string().required().messages({
-        "any.required": "ID Proof public_id is required.",
-      }),
-    }),
     password: Joi.string().min(8).max(20).required().messages({
       "string.empty": "Password is required.",
       "string.min": "Password must be at least 8 characters.",
@@ -102,88 +88,15 @@ export const validateNGO = (data) => {
       "string.empty": "Description is required.",
       "string.max": "Description cannot exceed 500 characters.",
     }),
-    prefersFoodType: Joi.alternatives()
-      .try(
-        Joi.string().custom((value, helpers) => {
-          console.log("Validating prefersFoodType:", value);
-          const items = value.split(",");
-          const invalid = items.filter((item) => !foodTypes.includes(item));
-          if (invalid.length) {
-            return helpers.error("any.invalid", { invalid });
-          }
-          return items;
-        })
-      )
-      .messages({
-        "array.base": "Prefers food type must be an array.",
-        "any.invalid":
-          "Prefers food type must be a JSON array string, comma-separated values, or multiple values. Invalid values: {{#invalid}}",
-      }),
-    rejectsFoodType: Joi.alternatives()
-      .try(
-        Joi.array().items(...foodTypes),
-        Joi.string().custom((value, helpers) => {
-          try {
-            const parsed = JSON.parse(value);
-            if (Array.isArray(parsed)) {
-              const invalid = parsed.filter(
-                (item) => !foodTypes.includes(item)
-              );
-              if (invalid.length) {
-                return helpers.error("any.invalid", { invalid });
-              }
-              return parsed;
-            }
-          } catch (e) {}
-          const items = value
-            .split(",")
-            .map((item) => item.trim())
-            .filter((item) => item);
-          const invalid = items.filter((item) => !foodTypes.includes(item));
-          if (invalid.length) {
-            return helpers.error("any.invalid", { invalid });
-          }
-          return items;
-        })
-      )
-      .messages({
-        "array.base": "Rejects food type must be an array.",
-        "any.invalid":
-          "Rejects food type must be a JSON array string, comma-separated values, or multiple values. Invalid values: {{#invalid}}",
-      }),
-
-    avoidsAllergen: Joi.alternatives()
-      .try(
-        Joi.array().items(...allergens),
-        Joi.string().custom((value, helpers) => {
-          try {
-            const parsed = JSON.parse(value);
-            if (Array.isArray(parsed)) {
-              const invalid = parsed.filter(
-                (item) => !allergens.includes(item)
-              );
-              if (invalid.length) {
-                return helpers.error("any.invalid", { invalid });
-              }
-              return parsed;
-            }
-          } catch (e) {}
-          const items = value
-            .split(",")
-            .map((item) => item.trim())
-            .filter((item) => item);
-          const invalid = items.filter((item) => !allergens.includes(item));
-          if (invalid.length) {
-            return helpers.error("any.invalid", { invalid });
-          }
-          return items;
-        })
-      )
-      .messages({
-        "array.base": "Avoids allergen must be an array.",
-        "any.invalid":
-          "Avoids allergen must be a JSON array string, comma-separated values, or multiple values. Invalid values: {{#invalid}}",
-      }),
+    prefersFoodType: Joi.array()
+      .items(Joi.string().valid(...foodTypes))
+      .min(0),
+    rejectsFoodType: Joi.array()
+      .items(Joi.string().valid(...foodTypes))
+      .min(0),
+    avoidsAllergen: Joi.array()
+      .items(Joi.string().valid(...allergens))
+      .min(0),
   });
 
   return schema.validate(data);

@@ -97,9 +97,15 @@ const handleNGORegister = async (req, res) => {
       description: req.body.description,
       city: req.body.city,
       state: req.body.state,
-      prefersFoodType: req.body.prefersFoodType,
-      rejectsFoodType: req.body.rejectsFoodType,
-      avoidsAllergen: req.body.avoidsAllergen,
+      prefersFoodType: req.body.prefersFoodType
+        .split(",")
+        .map((type) => type.trim()),
+      rejectsFoodType: req.body.rejectsFoodType
+        .split(",")
+        .map((type) => type.trim()),
+      avoidsAllergen: req.body.avoidsAllergen
+        .split(",")
+        .map((allergen) => allergen.trim()),
     };
     console.log(ngoData);
     for (const Model of Models) {
@@ -108,12 +114,12 @@ const handleNGORegister = async (req, res) => {
         return res.status(400).json({ error });
       }
     }
+    const { error } = validateNGO(ngoData);
     ngoData.registrationProof = await uploadToCloudinary(
       req.file.buffer,
       "ngo-registration-proof"
     );
 
-    const { error } = validateNGO(ngoData);
     if (error) {
       return res.status(400).json({ error: error.details[0].message });
     }
@@ -138,7 +144,7 @@ const handleNGORegister = async (req, res) => {
       rejectsFoodType: ngoData.rejectsFoodType,
       avoidsAllergen: ngoData.avoidsAllergen,
     });
-    res.status(201).json({ token, message: "NGO role added successfully" });
+    res.status(201).json({ message: "NGO role added successfully" });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
