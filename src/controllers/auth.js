@@ -27,6 +27,7 @@ const handleRegister = async (req, res) => {
       city: req.body.city,
       state: req.body.state,
     };
+    console.log(donorData);
     const { error } = validateDonor(donorData);
     if (error) {
       return res.status(400).json({ error: error.details[0].message });
