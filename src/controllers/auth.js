@@ -27,12 +27,15 @@ const handleRegister = async (req, res) => {
       city: req.body.city,
       state: req.body.state,
     };
+    console.log(donorData);
     const { error } = validateDonor(donorData);
+    console.log(error);
     if (error) {
       return res.status(400).json({ error: error.details[0].message });
     }
+    console.log(donorData);
     for (const Model of Models) {
-      const { error } = await checkAlreadyRegistered(email, Model);
+      const { error } = await checkAlreadyRegistered(donorData.email, Model);
       if (error) {
         return res.status(400).json({ error });
       }
@@ -69,7 +72,7 @@ const handleLogin = async (req, res) => {
       message: "Login successful",
       user: {
         email: user.email,
-        role: user.role,
+        role: "Donor",
         name: user.name,
       },
     });
@@ -98,8 +101,9 @@ const handleNGORegister = async (req, res) => {
       rejectsFoodType: req.body.rejectsFoodType,
       avoidsAllergen: req.body.avoidsAllergen,
     };
+    console.log(ngoData);
     for (const Model of Models) {
-      const { error } = await checkAlreadyRegistered(email, Model);
+      const { error } = await checkAlreadyRegistered(ngoData.email, Model);
       if (error) {
         return res.status(400).json({ error });
       }
