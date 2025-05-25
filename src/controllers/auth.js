@@ -19,13 +19,13 @@ const Models = [User, NGO];
 const handleRegister = async (req, res) => {
   try {
     const donorData = {
-      name,
-      email,
-      password,
-      phone,
-      address,
-      city,
-      state,
+      name: req.body.name,
+      email: req.body.email,
+      password: req.body.password,
+      phone: req.body.phone,
+      address: req.body.address,
+      city: req.body.city,
+      state: req.body.state,
     };
     const { error } = validateDonor(donorData);
     if (error) {
@@ -113,7 +113,7 @@ const handleNGORegister = async (req, res) => {
     if (error) {
       return res.status(400).json({ error: error.details[0].message });
     }
-    
+
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(ngoData.password, salt);
     ngoData.password = hashedPassword;
