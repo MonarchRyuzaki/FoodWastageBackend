@@ -7,15 +7,19 @@ dotenv.config({
   path: "../.env",
 });
 
-import authRoutes from "./routes/auth.routes.js";
-import foodDonationRoutes from "./routes/donation.routes.js";
-import claimRoutes from "./routes/claims.routes.js";
 import adminRoutes from "./routes/admin.routes.js";
+import authRoutes from "./routes/auth.routes.js";
+import claimRoutes from "./routes/claims.routes.js";
+import foodDonationRoutes from "./routes/donation.routes.js";
 
 const app = express();
 
 // Middleware
-app.use(cors());
+app.use(
+  cors({
+    origin: process.env.CORS_ORIGIN || "http://localhost:5173",
+  })
+);
 app.use(express.json());
 app.use(morgan("dev"));
 
@@ -29,4 +33,3 @@ app.get("/", (req, res) => {
 });
 
 export default app;
-
