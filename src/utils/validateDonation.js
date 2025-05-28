@@ -2,11 +2,8 @@ import Joi from "joi";
 import { allergens, foodTypes } from "./foodEnums.js";
 
 const foodDonationValidationSchema = Joi.object({
-  userId: Joi.string().required().messages({
-    "any.required": "User ID is required.",
-    "string.empty": "User ID cannot be empty.",
-  }),
-
+  _id: Joi.optional(),
+  userId: Joi.optional(),
   status: Joi.string()
     .valid("available", "claimed", "delivered")
     .default("available")
@@ -59,26 +56,6 @@ const foodDonationValidationSchema = Joi.object({
     "number.min": "Food quantity must be at least 1.",
   }),
 
-  foodImage: Joi.array()
-    .items(
-      Joi.object({
-        url: Joi.string()
-          .uri()
-          .required()
-          .pattern(/^https?:\/\/.*\.(jpg|jpeg|png)$/)
-          .messages({
-            "string.pattern.base":
-              "Each food image URL must be a valid URL ending with JPG, JPEG, or PNG.",
-          }),
-        public_id: Joi.string().required(),
-      })
-    )
-    .min(1)
-    .required()
-    .messages({
-      "array.min": "At least one food image is required.",
-    }),
-
   address: Joi.string().min(5).max(200).required().messages({
     "any.required": "Address is required.",
     "string.empty": "Address cannot be empty.",
@@ -130,6 +107,11 @@ const foodDonationValidationSchema = Joi.object({
     "any.required": "Contact email is required.",
     "string.email": "Contact email must be a valid email address.",
   }),
+
+  foodImage: Joi.optional(),
+  createdAt: Joi.optional(),
+  updatedAt: Joi.optional(),
+  __v: Joi.optional(),
 });
 
-export default foodDonationValidationSchema;
+export const validateFoodDonation = (data) => foodDonationValidationSchema.validate(data);

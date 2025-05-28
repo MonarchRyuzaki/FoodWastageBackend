@@ -72,8 +72,8 @@ export async function searchDonations({
     PREFIX geo:     <http://www.w3.org/2003/01/geo/wgs84_pos#>
     PREFIX omgeo: <http://www.ontotext.com/owlim/geo#>
 
-    SELECT
-      ?donation ?foodType ?allergen ?status ?expiry ?priority ?lat ?long ( omgeo:distance(?lat, ?long, ${ngoLat}, ${ngoLong}) AS ?distanceKm )
+    SELECT DISTINCT
+      ?donation ( omgeo:distance(?lat, ?long, ${ngoLat}, ${ngoLong}) AS ?distanceKm )
     WHERE {
       ${where.join("\n      ")}
       ${distanceClause}

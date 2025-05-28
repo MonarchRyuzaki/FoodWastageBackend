@@ -1,11 +1,13 @@
-import { uploadToCloudinary } from "../config/cloudinary.js";
+import { deleteFromCloudinary, uploadToCloudinary } from "../config/cloudinary.js";
 import FoodDonation from "../models/FoodDonation.js";
 import User from "../models/User.js";
 import { insertNewFoodDonation } from "../sparql/creatingNewFoodDonation.js";
+import { deleteFoodDonation as deleteFoodDonationQuery } from "../sparql/deleteFoodDonation.js";
+import { getDonationDistance } from "../sparql/getDonationDetails.js";
 import { searchDonations } from "../sparql/searchDonation.js";
 import { updateFoodDonation as updateFoodDonationQuery } from "../sparql/updateFoodDonation.js";
-import { deleteFoodDonation as deleteFoodDonationQuery } from "../sparql/deleteFoodDonation.js";
-import validateDonationData from "../utils/validateDonation.js";
+import extractDonationData from "../utils/extractDonationData.js";
+import { validateFoodDonation } from "../utils/validateDonation.js";
 
 export const createFoodDonation = async (req, res) => {
   try {
@@ -19,8 +21,10 @@ export const createFoodDonation = async (req, res) => {
       userId: req.user.id,
       foodTitle: req.body.title,
       foodDescription: req.body.description,
-      foodType: req.body.type,
-      containsAllergens: req.body.allergens,
+      foodType: req.body.type.split(",").map((type) => type.trim()),
+      containsAllergen: req.body.allergens
+        .split(",")
+        .map((allergen) => allergen.trim()),
       foodQuantity: parseInt(req.body.quantity),
       address: req.body.address,
       city: req.body.city,
@@ -31,6 +35,14 @@ export const createFoodDonation = async (req, res) => {
       contactPhoneNumber: user.phone,
       contactEmail: user.email,
     };
+
+    // Validate data
+    console.log(foodData);
+    const { error } = validateFoodDonation(foodData);
+    console.log(error);
+    if (error) {
+      return res.status(400).json({ error: error.details[0].message });
+    }
 
     // Upload images to Cloudinary
     const imageUrls = [];
@@ -43,18 +55,13 @@ export const createFoodDonation = async (req, res) => {
     }
     foodData.foodImage = imageUrls;
 
-    // Validate data
-    const { error } = validateDonationData(foodData);
-    if (error) {
-      return res.status(400).json({ error: error.details[0].message });
-    }
-
     // Create new donation
     const newDonation = new FoodDonation(foodData);
     await newDonation.save();
+    console.log("New Donation:", newDonation);
     await insertNewFoodDonation({
       mongoID: newDonation._id,
-      containsAllergen: foodData.containsAllergens,
+      containsAllergen: foodData.containsAllergen,
       hasFoodType: foodData.foodType,
       hasExpiryDate: foodData.expiryDate,
       latitude: foodData.latitude,
@@ -74,8 +81,8 @@ export const createFoodDonation = async (req, res) => {
 export const getFoodDonation = async (req, res) => {
   try {
     const results = await searchDonations({
-      ngoLat: req.query.lat,
-      ngoLong: req.query.long,
+      ngoLat: parseFloat(req.query.lat),
+      ngoLong: parseFloat(req.query.long),
       maxDistanceKm: parseFloat(req.query.distance) || 10,
       status: req.query.status?.split(",") || ["Available"],
       priority: req.query.priority?.split(",") || ["High", "Medium", "Low"],
@@ -83,8 +90,20 @@ export const getFoodDonation = async (req, res) => {
       rejectsFoodType: req.query.rejectsFoodType?.split(",") || [],
       avoidsAllergens: req.query.avoidsAllergens?.split(",") || [],
     });
-    // When making frontend, transform the results to get only the mongoID and distance then use the mongoID to get the details of the donation from DB.
-    res.json({ donations });
+    const donationData = extractDonationData(results);
+    const donations = await FoodDonation.find({
+      _id: { $in: donationData.map((d) => d.mongoId) },
+    }).exec();
+    const response = donations.map((donation) => {
+      const data = donationData.find(
+        (d) => d.mongoId === donation._id.toString()
+      );
+      return {
+        ...donation.toObject(),
+        distanceKm: data ? data.distanceKm : null,
+      };
+    });
+    res.json({ donations: response });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -93,7 +112,14 @@ export const getFoodDonation = async (req, res) => {
 export const getFoodDonationDetails = async (req, res) => {
   try {
     const donation = await FoodDonation.findById(req.params.id).exec();
-    res.json({ donation });
+    const distanceKm = await getDonationDistance({
+      mongoId: req.params.id,
+      ngoLat: parseFloat(req.query.lat),
+      ngoLong: parseFloat(req.query.long),
+    });
+    const donationObj = donation.toObject();
+    donationObj.distance = distanceKm;
+    res.json({ donation: donationObj });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -105,11 +131,14 @@ export const updateFoodDonation = async (req, res) => {
     if (!donation) {
       return res.status(404).json({ error: "Donation not found" });
     }
+    if (donation.userId.toString() !== req.user.id) {
+      return res.status(403).json({ error: "You are not authorized to update this donation" });
+    }
     const allowedFields = [
       "foodTitle",
       "foodDescription",
       "foodType",
-      "containsAllergens",
+      "containsAllergen",
       "foodQuantity",
       "address",
       "city",
@@ -121,12 +150,18 @@ export const updateFoodDonation = async (req, res) => {
     for (const key of allowedFields) {
       if (req.body[key] !== undefined) {
         updateData[key] = req.body[key];
+        // if (key === "foodType" || key === "containsAllergen") {
+        //   updateData[key] = updateData[key]
+        //     .split(",")
+        //     .map((item) => item.trim());
+        // }
       }
     }
+    console.log("Update Data:", updateData);
 
     const updatedDonationData = { ...donation.toObject(), ...updateData };
-
-    const { error } = validateDonationData(updatedDonationData);
+    console.log("Updated Donation Data:", updatedDonationData);
+    const { error } = validateFoodDonation(updatedDonationData);
     if (error) {
       return res.status(400).json({ error: error.details[0].message });
     }
@@ -138,7 +173,7 @@ export const updateFoodDonation = async (req, res) => {
     ).exec();
     await updateFoodDonationQuery({
       mongoID: updatedDonation._id,
-      containsAllergen: updateData["containsAllergens"] || null,
+      containsAllergen: updateData["containsAllergen"] || null,
       hasFoodType: updateData["foodType"] || null,
       hasExpiryDate: updateData["expiryDate"] || null,
     });
@@ -154,11 +189,19 @@ export const updateFoodDonation = async (req, res) => {
 
 export const deleteFoodDonation = async (req, res) => {
   try {
-    const donation = await FoodDonation.findById(req.params.id).exec();
+    const donation = await FoodDonation.findByIdAndDelete(req.params.id, ).exec();
+    console.log("Donation to delete:", donation);
     if (!donation) {
       return res.status(404).json({ error: "Donation not found" });
     }
-    await donation.remove();
+    if (donation.userId.toString() !== req.user.id) {
+      return res.status(403).json({ error: "You are not authorized to delete this donation" });
+    }
+    if (donation.foodImage && donation.foodImage.length > 0) {
+      for (const image of donation.foodImage) {
+        await deleteFromCloudinary(image.public_id);
+      }
+    }
     await deleteFoodDonationQuery({ mongoID: req.params.id });
     res.json({ message: "Donation deleted successfully" });
   } catch (err) {

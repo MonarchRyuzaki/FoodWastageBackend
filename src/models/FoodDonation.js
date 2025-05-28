@@ -31,7 +31,7 @@ const foodDonationSchema = new mongoose.Schema(
       },
     },
 
-    containsAllergens: {
+    containsAllergen: {
       type: [String],
       required: [true, "Allergen list is required"],
       enum: {

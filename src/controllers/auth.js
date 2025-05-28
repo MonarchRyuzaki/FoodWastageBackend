@@ -67,6 +67,8 @@ const handleLogin = async (req, res) => {
       process.env.JWT_SECRET,
       { expiresIn: "1d" }
     );
+    // console.log({id: user._id, name: user.name, email: user.email, role: "Donor"});
+    // console.log(token);
     res.status(201).json({
       token,
       message: "Login successful",
@@ -168,7 +170,7 @@ const handleNGOLogin = async (req, res) => {
       message: "Login successful",
       user: {
         email: ngo.email,
-        role: ngo.role,
+        role: "NGO",
         name: ngo.name,
       },
     });

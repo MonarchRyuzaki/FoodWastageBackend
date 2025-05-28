@@ -21,7 +21,6 @@ export async function updateFoodDonation({
   hasExpiryDate = null, // pass null if you don’t want to change
 }) {
   const donationIRI = `:${mongoID}`;
-  const donorIRI = donorMongoID ? `:${donorMongoID}_Donor` : null;
 
   // Build DELETE patterns and INSERT patterns conditionally:
   let deletePatterns = [];
