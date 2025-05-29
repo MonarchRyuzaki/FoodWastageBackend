@@ -46,8 +46,8 @@ export async function searchDonations({
   }
   let distanceClause = "";
   if (ngoLat && ngoLong) {
-    distanceClause = `?donation omgeo:nearby(${ngoLat} ${ngoLong} "${maxDistanceKm}km").`;
-  }
+    distanceClause = `FILTER(?distanceKm <= ${maxDistanceKm}) .`;
+  } 
 
   const valueFilters = [];
   if (statusList.length) {
