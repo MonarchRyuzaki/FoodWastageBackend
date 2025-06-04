@@ -95,19 +95,6 @@ const foodDonationValidationSchema = Joi.object({
       "date.max": "Expiry date cannot be more than 2 days from now.",
     }),
 
-  contactPhoneNumber: Joi.string()
-    .pattern(/^[0-9]{10}$/)
-    .required()
-    .messages({
-      "any.required": "Contact phone number is required.",
-      "string.pattern.base": "Contact phone number must be exactly 10 digits.",
-    }),
-
-  contactEmail: Joi.string().email().required().messages({
-    "any.required": "Contact email is required.",
-    "string.email": "Contact email must be a valid email address.",
-  }),
-
   foodImage: Joi.optional(),
   createdAt: Joi.optional(),
   updatedAt: Joi.optional(),

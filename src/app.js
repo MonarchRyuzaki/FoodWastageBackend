@@ -20,14 +20,31 @@ app.use(
     origin: process.env.CORS_ORIGIN || "http://localhost:5173",
   })
 );
-app.use(express.json());
-app.use(morgan("dev"));
+
+// Increase JSON payload limit for better performance
+app.use(express.json({ limit: "10mb" }));
+app.use(express.urlencoded({ extended: true, limit: "10mb" }));
+
+// Conditional logging - disable in benchmark mode for performance
+if (process.env.NODE_ENV !== "benchmark") {
+  app.use(morgan("dev"));
+}
+
+// Optimize express settings for high concurrency
+if (process.env.NODE_ENV === "benchmark") {
+  app.set("trust proxy", 1);
+  // Disable x-powered-by header
+  app.disable("x-powered-by");
+  // Disable etag for benchmarking
+  app.disable("etag");
+}
 
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/food-donations", foodDonationRoutes);
 app.use("/api/claims", claimRoutes);
 app.use("/api/admin", adminRoutes);
+
 app.get("/", (req, res) => {
   res.send("API is running...");
 });

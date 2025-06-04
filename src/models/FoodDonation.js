@@ -79,14 +79,6 @@ const foodDonationSchema = new mongoose.Schema(
       type: Date,
       required: true,
     },
-    contactPhoneNumber: {
-      type: String,
-      required: true,
-    },
-    contactEmail: {
-      type: String,
-      required: true,
-    },
   },
   { timestamps: true }
 );

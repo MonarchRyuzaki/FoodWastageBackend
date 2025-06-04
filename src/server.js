@@ -7,7 +7,9 @@ const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   async function connectToDatabase() {
     try {
-      await mongoose.connect(process.env.MONGODB_URL);
+      await mongoose.connect(process.env.MONGODB_URL, {
+        maxPoolSize: 1000,
+      });
       console.log("Connected to MongoDB");
     } catch (error) {
       console.error("Error connecting to MongoDB:", error.message);
