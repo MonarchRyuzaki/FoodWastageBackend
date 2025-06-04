@@ -10,7 +10,7 @@ TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
 mkdir -p $OUTPUT_DIR
 
 # Array of connection counts to test
-CONNECTIONS=(16 32)
+CONNECTIONS=(8 16 32)
 # CONNECTIONS=(8 16 32)
 
 echo "Starting load test for create-donation endpoint"

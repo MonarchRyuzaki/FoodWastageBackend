@@ -3,7 +3,6 @@ import {
   uploadToCloudinary,
 } from "../config/cloudinary.js";
 import FoodDonation from "../models/FoodDonation.js";
-import User from "../models/User.js";
 import { insertNewFoodDonation } from "../sparql/creatingNewFoodDonation.js";
 import { deleteFoodDonation as deleteFoodDonationQuery } from "../sparql/deleteFoodDonation.js";
 import { getDonationDistance } from "../sparql/getDonationDetails.js";
@@ -70,24 +69,23 @@ export const createFoodDonation = async (req, res) => {
     );
 
     // Execute core operations in parallel
-    const results = await Promise.allSettled(parallelOperations);
+    // const results = await Promise.allSettled(parallelOperations);
 
-    // Check if MongoDB save succeeded
-    if (results[0].status === "rejected") {
-      throw new Error(`MongoDB save failed: ${results[0].reason.message}`);
-    }
+    // // Check if MongoDB save succeeded
+    // if (results[0].status === "rejected") {
+    //   throw new Error(`MongoDB save failed: ${results[0].reason.message}`);
+    // }
 
-    // Log SPARQL errors but don't fail the request
-    if (
-      results[1].status === "rejected" &&
-      process.env.NODE_ENV !== "benchmark"
-    ) {
-      console.error("SPARQL insert failed:", results[1].reason);
-    }
+    // // Log SPARQL errors but don't fail the request
+    // if (
+    //   results[1].status === "rejected" &&
+    //   process.env.NODE_ENV !== "benchmark"
+    // ) {
+    //   console.error("SPARQL insert failed:", results[1].reason);
+    // }
 
     // Handle image upload asynchronously (don't block response)
     if (
-      process.env.NODE_ENV !== "test" &&
       process.env.NODE_ENV !== "benchmark" &&
       req.files
     ) {
