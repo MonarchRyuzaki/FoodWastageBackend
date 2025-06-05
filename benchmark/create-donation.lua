@@ -114,7 +114,7 @@ request = function()
   
   return wrk.format("POST", "/api/food-donations", {
     ["Content-Type"] = "multipart/form-data; boundary=" .. boundary,
-    ["Authorization"] = "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4MzJjOWQxNjVkMmVjNDc1NmNhYjJlZCIsIm5hbWUiOiJTaGl2YW0gR2FuZ3VseSIsImVtYWlsIjoidGVzdEBnbWFpbC5jb20iLCJyb2xlIjoiRG9ub3IiLCJpYXQiOjE3NDkwMTE3NjksImV4cCI6MTc0OTA5ODE2OX0.gzCE6lscfu5xh136yOG1SmU_RCt4ZgNPMSRyvbzPdQs",
+    ["Authorization"] = "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4MzJjOWQxNjVkMmVjNDc1NmNhYjJlZCIsIm5hbWUiOiJTaGl2YW0gR2FuZ3VseSIsImVtYWlsIjoidGVzdEBnbWFpbC5jb20iLCJyb2xlIjoiRG9ub3IiLCJpYXQiOjE3NDkxMDg0NjksImV4cCI6MTc0OTE5NDg2OX0.OMJfsrTkZf6yQ5nfcdXyAxj8MaNmdeygt1B7DHxzeHc",
     ["Content-Length"] = tostring(string.len(body))
   }, body)
 end

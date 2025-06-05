@@ -85,10 +85,7 @@ export const createFoodDonation = async (req, res) => {
     // }
 
     // Handle image upload asynchronously (don't block response)
-    if (
-      process.env.NODE_ENV !== "benchmark" &&
-      req.files
-    ) {
+    if (process.env.NODE_ENV !== "benchmark" && req.files) {
       // Fire and forget - upload images in background
       setImmediate(async () => {
         try {
@@ -122,46 +119,194 @@ export const createFoodDonation = async (req, res) => {
 
 export const getFoodDonation = async (req, res) => {
   try {
-    const results = await searchDonations({
-      ngoLat: parseFloat(req.query.lat),
-      ngoLong: parseFloat(req.query.long),
+    // Parse and validate coordinates early
+    const ngoLat = parseFloat(req.query.lat);
+    const ngoLong = parseFloat(req.query.long);
+
+    if (isNaN(ngoLat) || isNaN(ngoLong)) {
+      return res
+        .status(400)
+        .json({ error: "Valid latitude and longitude are required" });
+    }
+
+    // PAGINATION PARAMETERS
+    const page = Math.max(1, parseInt(req.query.page) || 1);
+    const pageSize = Math.min(
+      20,
+      Math.max(1, parseInt(req.query.pageSize) || 10)
+    );
+    const offset = (page - 1) * pageSize;
+
+    // Optimize SPARQL search parameters
+    const searchParams = {
+      ngoLat,
+      ngoLong,
       maxDistanceKm: parseFloat(req.query.distance) || 10,
       status: req.query.status?.split(",") || ["Available"],
       priority: req.query.priority?.split(",") || ["High", "Medium", "Low"],
       prefersFoodType: req.query.prefersFoodType?.split(",") || [],
       rejectsFoodType: req.query.rejectsFoodType?.split(",") || [],
       avoidsAllergens: req.query.avoidsAllergens?.split(",") || [],
-    });
+      limit: pageSize,
+      offset: offset,
+    };
+
+    // Execute SPARQL search with pagination-aware limits
+    const { results, totalFetched } = await searchDonations(searchParams);
+    // Early return if no results
+    if (!results || results.length === 0) {
+      return res.json({
+        donations: [],
+        pagination: {
+          page,
+          pageSize,
+          totalItems: 0,
+          totalPages: 0,
+          hasNextPage: false,
+          hasPrevPage: page > 1,
+        },
+      });
+    }
+
+    // Extract donation data more efficiently
     const donationData = extractDonationData(results);
-    const donations = await FoodDonation.find({
-      _id: { $in: donationData.map((d) => d.mongoId) },
-    }).exec();
-    const response = donations.map((donation) => {
-      const data = donationData.find(
-        (d) => d.mongoId === donation._id.toString()
-      );
-      return {
-        ...donation.toObject(),
-        distanceKm: data ? data.distanceKm : null,
-      };
+    if (donationData.length === 0) {
+      return res.json({
+        donations: [],
+        pagination: {
+          page,
+          pageSize,
+          totalItems: 0,
+          totalPages: 0,
+          hasNextPage: false,
+          hasPrevPage: page > 1,
+        },
+      });
+    }
+
+    // OPTIMIZED MongoDB query - only fetch what we need
+    const mongoIds = donationData.map((d) => d.mongoId);
+    const donations = await FoodDonation.find(
+      { _id: { $in: mongoIds } },
+      {
+        // Project only needed fields for better performance
+        foodTitle: 1,
+        foodDescription: 1,
+        foodType: 1,
+        containsAllergen: 1,
+        foodQuantity: 1,
+        address: 1,
+        city: 1,
+        state: 1,
+        expiryDate: 1,
+        contactPhoneNumber: 1,
+        contactEmail: 1,
+        foodImage: 1,
+        createdAt: 1,
+        userId: 1,
+      }
+    )
+      .lean() // Use lean for better performance
+      .exec();
+    // Create a Map for O(1) lookup instead of O(n) find operations
+    const distanceMap = new Map();
+    donationData.forEach((d) => {
+      distanceMap.set(d.mongoId, d.distanceKm);
     });
-    res.json({ donations: response });
+
+    // Optimize response mapping
+    const response = donations.map((donation) => ({
+      ...donation,
+      distanceKm: distanceMap.get(donation._id.toString()) || null,
+    }));
+
+    // COMPREHENSIVE SORTING (moved from GraphDB to here)
+    response.sort((a, b) => {
+      // 1. First priority: Food preferences (if specified)
+      if (searchParams.prefersFoodType.length > 0) {
+        const aHasPreferred = a.foodType.some((type) =>
+          searchParams.prefersFoodType.includes(type)
+        );
+        const bHasPreferred = b.foodType.some((type) =>
+          searchParams.prefersFoodType.includes(type)
+        );
+
+        if (aHasPreferred && !bHasPreferred) return -1;
+        if (!aHasPreferred && bHasPreferred) return 1;
+      }
+
+      // 2. Second priority: Distance (closest first)
+      const distanceA = a.distanceKm || Infinity;
+      const distanceB = b.distanceKm || Infinity;
+      if (distanceA !== distanceB) {
+        return distanceA - distanceB;
+      }
+
+      // 3. Third priority: Donation priority (High > Medium > Low)
+      const priorityOrder = { High: 3, Medium: 2, Low: 1 };
+      const priorityA = priorityOrder[a.priority] || 0;
+      const priorityB = priorityOrder[b.priority] || 0;
+      if (priorityA !== priorityB) {
+        return priorityB - priorityA; // Descending order
+      }
+
+      // 4. Fourth priority: Expiry date (earliest expires first)
+      const expiryA = new Date(a.expiryDate).getTime();
+      const expiryB = new Date(b.expiryDate).getTime();
+      if (expiryA !== expiryB) {
+        return expiryA - expiryB;
+      }
+
+      // 5. Final tie-breaker: Creation date (newest first)
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    });
+
+    // APPLY PAGINATION after sorting
+    const startIndex = offset;
+    const endIndex = startIndex + pageSize;
+    const paginatedResults = response.slice(startIndex, endIndex);
+
+    // Calculate pagination metadata
+    const totalItems = Math.min(totalFetched, response.length);
+    const totalPages = Math.ceil(totalItems / pageSize);
+    const hasNextPage =
+      page < totalPages &&
+      totalFetched === Math.min(searchParams.limit * 3, 100);
+    const hasPrevPage = page > 1;
+
+    res.json({
+      donations: paginatedResults,
+      pagination: {
+        page,
+        pageSize,
+        totalItems: totalItems,
+        totalPages,
+        hasNextPage,
+        hasPrevPage,
+        // Add hint if more results might be available
+        moreResultsAvailable:
+          totalFetched === Math.min(searchParams.limit * 3, 100),
+      },
+    });
   } catch (err) {
+    // Only log errors in non-benchmark mode
+    if (process.env.NODE_ENV !== "benchmark") {
+      console.error("getFoodDonation error:", err);
+    }
     res.status(500).json({ error: err.message });
   }
 };
 
 export const getFoodDonationDetails = async (req, res) => {
   try {
-    const donation = await FoodDonation.findById(req.params.id).exec();
+    const donation = await FoodDonation.findById(req.params.id).lean().exec();
     const distanceKm = await getDonationDistance({
       mongoId: req.params.id,
       ngoLat: parseFloat(req.query.lat),
       ngoLong: parseFloat(req.query.long),
     });
-    const donationObj = donation.toObject();
-    donationObj.distance = distanceKm;
-    res.json({ donation: donationObj });
+    donation.distance = distanceKm;
+    res.json({ donation });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
