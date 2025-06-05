@@ -1,9 +1,9 @@
 # Configuration
-SCRIPT_NAME="all-get.lua"
+SCRIPT_NAME="get-details.lua"
 BASE_URL="http://localhost:5000"
 DURATION="10s"  # Increased duration for more stable results
 THREADS=8
-OUTPUT_DIR="results_all_get"
+OUTPUT_DIR="results_get_details"
 TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
 
 # Create output directory if it doesn't exist
@@ -26,7 +26,7 @@ for conn in "${CONNECTIONS[@]}"; do
     echo "Testing with $conn connections..."
     
     # Output file for this specific test
-    OUTPUT_FILE="$OUTPUT_DIR/all-get-c${conn}-d${DURATION}.txt"
+    OUTPUT_FILE="$OUTPUT_DIR/get-details-c${conn}-d${DURATION}.txt"
     
     # Run wrk and save output
     wrk -t$THREADS -c$conn -d$DURATION -L -s $SCRIPT_NAME $BASE_URL > $OUTPUT_FILE 2>&1
