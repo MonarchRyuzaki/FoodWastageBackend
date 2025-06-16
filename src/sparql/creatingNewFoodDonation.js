@@ -21,7 +21,7 @@ export const insertNewFoodDonation = async ({
     ? `    :hasFoodType       ${foodTypeList} ;`
     : "";
   const expiryClause = hasExpiryDate
-    ? `    :hasExpiryDate    "${hasExpiryDate}"^^xsd:date ;`
+    ? `    :hasExpiryDate    "${hasExpiryDate}"^^xsd:dateTime ;`
     : "";
 
   const donationIRI = `:${mongoID}`;
