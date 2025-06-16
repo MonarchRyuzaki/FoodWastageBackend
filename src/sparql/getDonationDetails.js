@@ -12,7 +12,7 @@ const client = createFoodWastageSparqlClient();
  */
 export async function getDonationDistance({ mongoId, ngoLat, ngoLong }) {
   // Construct the full donation URI using the mongoId.
-  const donationUri = `http://www.semanticweb.org/ryuzaki/ontologies/2025/4/FoodWastageOntology#${mongoId}`;
+  const donationUri = `https://w3id.org/foodwaste/ontology#${mongoId}`;
 
   const sparql = `
     PREFIX geo:     <http://www.w3.org/2003/01/geo/wgs84_pos#>
@@ -28,7 +28,6 @@ export async function getDonationDistance({ mongoId, ngoLat, ngoLong }) {
   `;
 
   const { results } = await client.query(sparql);
-  console.log("SPARQL Query Results:", results);
   if (results.bindings && results.bindings.length) {
     // Parse and return the distance.
     return parseFloat(results.bindings[0].distanceKm.value);

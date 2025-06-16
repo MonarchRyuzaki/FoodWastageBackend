@@ -299,12 +299,14 @@ export const getFoodDonation = async (req, res) => {
 
 export const getFoodDonationDetails = async (req, res) => {
   try {
-    const donation = await FoodDonation.findById(req.params.id).lean().exec();
-    const distanceKm = await getDonationDistance({
-      mongoId: req.params.id,
-      ngoLat: parseFloat(req.query.lat),
-      ngoLong: parseFloat(req.query.long),
-    });
+    const [donation, distanceKm] = await Promise.all([
+      FoodDonation.findById(req.params.id).lean().exec(),
+      getDonationDistance({
+        mongoId: req.params.id,
+        ngoLat: parseFloat(req.query.lat),
+        ngoLong: parseFloat(req.query.long),
+      }),
+    ]);
     donation.distance = distanceKm;
     res.json({ donation });
   } catch (err) {

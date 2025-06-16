@@ -53,7 +53,8 @@ export async function searchDonations({
   if (hasLocation) {
     wherePatterns.push(
       "?donation geo:lat  ?lat ;",
-      "          geo:long ?long ."
+      "          geo:long ?long .",
+      `BIND(omgeo:distance(?lat, ?long, ${ngoLat}, ${ngoLong}) AS ?distanceKm)`
     );
   }
 
@@ -86,11 +87,9 @@ export async function searchDonations({
   // Build filters
   const filters = [];
 
-  // Distance filter (most selective, apply early)
+  // Distance filter using the bound variable
   if (hasLocation) {
-    filters.push(
-      `FILTER(omgeo:distance(?lat, ?long, ${ngoLat}, ${ngoLong}) <= ${maxDistanceKm})`
-    );
+    filters.push(`FILTER(?distanceKm <= ${maxDistanceKm})`);
   }
 
   // Exclusion filters using MINUS (more efficient than FILTER NOT EXISTS)
@@ -116,7 +115,7 @@ export async function searchDonations({
   // Build SELECT clause
   let selectClause = "SELECT DISTINCT ?donation";
   if (hasLocation) {
-    selectClause += ` (omgeo:distance(?lat, ?long, ${ngoLat}, ${ngoLong}) AS ?distanceKm)`;
+    selectClause += ` ?distanceKm`;
   }
 
   // OPTIMIZATION: Use larger SPARQL limit but still bounded
