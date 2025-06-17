@@ -1,0 +1,109 @@
+[
+    {
+      "name": "FreshProduce only within 5km",
+      "filters": {
+        "lat": 22.5726,
+        "long": 88.3639,
+        "distance": 5,
+        "prefersFoodType": "FreshProduce",
+        "rejectsFoodType": "",
+        "avoidsAllergens": ""
+      },
+      "expected": [
+        "68512058cb6c155ab163e06f",
+        "685120ecc77c8878af8a6c46",
+        "68512161c77c8878af8a6c62",
+        "6851219ec77c8878af8a6c7b"
+      ]
+    },
+    {
+      "name": "BakedGoods & Grains within 5km",
+      "filters": {
+        "lat": 22.5726,
+        "long": 88.3639,
+        "distance": 5,
+        "prefersFoodType": "BakedGoods,Grains_and_Cereals",
+        "rejectsFoodType": "",
+        "avoidsAllergens": ""
+      },
+      "expected": [
+        "68511e95cba9874665e72925",
+        "68512058cb6c155ab163e071",
+        "685120ecc77c8878af8a6c48",
+        "68512161c77c8878af8a6c64",
+        "685121a0c77c8878af8a6c7d",
+        "68512058cb6c155ab163e079",
+        "685120ecc77c8878af8a6c50",
+        "68512161c77c8878af8a6c6c",
+        "685121a8c77c8878af8a6c85"
+      ]
+    },
+    {
+      "name": "BakedGoods & Grains minus Wheat within 5km",
+      "filters": {
+        "lat": 22.5726,
+        "long": 88.3639,
+        "distance": 5,
+        "prefersFoodType": "BakedGoods,Grains_and_Cereals",
+        "rejectsFoodType": "",
+        "avoidsAllergens": "Wheat"
+      },
+      "expected": [
+        "68512058cb6c155ab163e071",
+        "685120ecc77c8878af8a6c48",
+        "68512161c77c8878af8a6c64",
+        "685121a0c77c8878af8a6c7d",
+        "68512058cb6c155ab163e079",
+        "685120ecc77c8878af8a6c50",
+        "68512161c77c8878af8a6c6c",
+        "685121a8c77c8878af8a6c85"
+      ]
+    },
+    {
+      "name": "Processed_and_Packaged minus Wheat & Soybeans within 10km",
+      "filters": {
+        "lat": 22.5726,
+        "long": 88.3639,
+        "distance": 10,
+        "prefersFoodType": "Processed_and_Packaged",
+        "rejectsFoodType": "",
+        "avoidsAllergens": "Wheat,Soybeans"
+      },
+      "expected": [
+        "68512058cb6c155ab163e07b",
+        "68512058cb6c155ab163e085",
+        "685120ecc77c8878af8a6c52",
+        "685120ecc77c8878af8a6c5c",
+        "68512161c77c8878af8a6c6e",
+        "68512161c77c8878af8a6c78",
+        "685121aac77c8878af8a6c87",
+        "685121b4c77c8878af8a6c93"
+      ]
+    },
+    {
+      "name": "DairyProducts minus Milk within 10km",
+      "filters": {
+        "lat": 22.5726,
+        "long": 88.3639,
+        "distance": 10,
+        "prefersFoodType": "DairyProducts",
+        "rejectsFoodType": "",       
+        "avoidsAllergens": "Milk"
+      },
+      "expected": []
+    },
+    {
+      "name": "Snacks & Sea_Food within 20km",
+      "filters": {
+        "lat": 22.5726,
+        "long": 88.3639,
+        "distance": 20,
+        "prefersFoodType": "Snacks,Sea_Food",
+        "rejectsFoodType": "",
+        "avoidsAllergens": "Fish"                
+      },
+      "expected": [
+        "68511e95cba9874665e7292f"
+      ]
+    }
+  ]
