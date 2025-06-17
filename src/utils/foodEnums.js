@@ -5,7 +5,7 @@ export const foodTypes = [
   "DairyProducts",
   "Diabetic_Sweets",
   "FreshProduce",
-  "Grains_and_Cerals",
+  "Grains_and_Cereals",
   "Meat",
   "Non_Diabetic_Sweets",
   "Processed_and_Packaged",

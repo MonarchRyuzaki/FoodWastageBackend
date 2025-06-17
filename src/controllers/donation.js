@@ -27,7 +27,7 @@ export const createFoodDonation = async (req, res) => {
       foodDescription: req.body.description,
       foodType: req.body.type.split(",").map((type) => type.trim()),
       containsAllergen: req.body.allergens
-        .split(",")
+        ?.split(",")
         .map((allergen) => allergen.trim()),
       foodQuantity: parseInt(req.body.quantity),
       address: req.body.address,
@@ -122,7 +122,6 @@ export const getFoodDonation = async (req, res) => {
     // Parse and validate coordinates early
     const ngoLat = parseFloat(req.query.lat);
     const ngoLong = parseFloat(req.query.long);
-
     if (isNaN(ngoLat) || isNaN(ngoLong)) {
       return res
         .status(400)
@@ -133,7 +132,7 @@ export const getFoodDonation = async (req, res) => {
     const page = Math.max(1, parseInt(req.query.page) || 1);
     const pageSize = Math.min(
       20,
-      Math.max(1, parseInt(req.query.pageSize) || 10)
+      Math.max(1, parseInt(req.query.pageSize) || 50)
     );
     const offset = (page - 1) * pageSize;
 
@@ -144,13 +143,12 @@ export const getFoodDonation = async (req, res) => {
       maxDistanceKm: parseFloat(req.query.distance) || 10,
       status: req.query.status?.split(",") || ["Available"],
       priority: req.query.priority?.split(",") || ["High", "Medium", "Low"],
-      prefersFoodType: req.query.prefersFoodType?.split(",") || [],
-      rejectsFoodType: req.query.rejectsFoodType?.split(",") || [],
-      avoidsAllergens: req.query.avoidsAllergens?.split(",") || [],
+      prefersFoodType: req.query.prefersFoodType != undefined && req.query.prefersFoodType.trim() != "" && req.query.prefersFoodType?.split(",")  || [],
+      rejectsFoodType: req.query.rejectsFoodType != undefined && req.query.rejectsFoodType.trim() != "" && req.query.rejectsFoodType?.split(",")  || [],
+      avoidsAllergens: req.query.avoidsAllergens != undefined && req.query.avoidsAllergens.trim() != "" && req.query.avoidsAllergens?.split(",")  || [],
       limit: pageSize,
       offset: offset,
     };
-
     // Execute SPARQL search with pagination-aware limits
     const { results, totalFetched } = await searchDonations(searchParams);
     // Early return if no results

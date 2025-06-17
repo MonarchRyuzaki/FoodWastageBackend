@@ -38,7 +38,6 @@ export async function searchDonations({
   const prefersList = Array.isArray(prefersFoodType) ? prefersFoodType : [];
   const rejectsList = Array.isArray(rejectsFoodType) ? rejectsFoodType : [];
   const avoidsList = Array.isArray(avoidsAllergens) ? avoidsAllergens : [];
-
   // Build optimized query parts
   const hasLocation = ngoLat != null && ngoLong != null;
 
@@ -61,11 +60,6 @@ export async function searchDonations({
   // Only bind food type if we need it for preferences or rejections
   if (prefersList.length > 0 || rejectsList.length > 0) {
     wherePatterns.push("?donation :hasFoodType ?foodType .");
-  }
-
-  // Only bind allergens if we need to avoid them
-  if (avoidsList.length > 0) {
-    wherePatterns.push("?donation :containsAllergen ?allergen .");
   }
 
   // Always include expiry for potential future filtering
@@ -139,7 +133,6 @@ export async function searchDonations({
     }
     LIMIT ${sparqlLimit}
   `.trim();
-
   try {
     const { results } = await getClient().query(sparql);
     return { results: results.bindings, totalFetched: results.bindings.length };
