@@ -13,13 +13,8 @@ import { validateFoodDonation } from "../utils/validateDonation.js";
 
 export const createFoodDonation = async (req, res) => {
   try {
-    if (
-      process.env.NODE_ENV !== "benchmark" &&
-      (!req.files || req.files.length === 0)
-    ) {
-      return res
-        .status(400)
-        .json({ error: "At least one food image is required." });
+    if (process.env.NODE_ENV !== "benchmark" && !req.file) {
+      return res.status(400).json({ error: "Food Image is Required" });
     }
     const foodData = {
       userId: req.user.id,
@@ -27,8 +22,8 @@ export const createFoodDonation = async (req, res) => {
       foodDescription: req.body.description,
       foodType: req.body.type.split(",").map((type) => type.trim()),
       containsAllergen: req.body.allergens
-        ?.split(",")
-        .map((allergen) => allergen.trim()),
+        ? req.body.allergens.split(",").map((allergen) => allergen.trim())
+        : [], // Always provide an array, even if empty
       foodQuantity: parseInt(req.body.quantity),
       address: req.body.address,
       city: req.body.city,
@@ -111,6 +106,7 @@ export const createFoodDonation = async (req, res) => {
     res.status(201).json({
       message: "Food donation listed successfully",
       donationId: newDonation._id,
+      success: true,
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -143,9 +139,21 @@ export const getFoodDonation = async (req, res) => {
       maxDistanceKm: parseFloat(req.query.distance) || 10,
       status: req.query.status?.split(",") || ["Available"],
       priority: req.query.priority?.split(",") || ["High", "Medium", "Low"],
-      prefersFoodType: req.query.prefersFoodType != undefined && req.query.prefersFoodType.trim() != "" && req.query.prefersFoodType?.split(",")  || [],
-      rejectsFoodType: req.query.rejectsFoodType != undefined && req.query.rejectsFoodType.trim() != "" && req.query.rejectsFoodType?.split(",")  || [],
-      avoidsAllergens: req.query.avoidsAllergens != undefined && req.query.avoidsAllergens.trim() != "" && req.query.avoidsAllergens?.split(",")  || [],
+      prefersFoodType:
+        (req.query.prefersFoodType != undefined &&
+          req.query.prefersFoodType.trim() != "" &&
+          req.query.prefersFoodType?.split(",")) ||
+        [],
+      rejectsFoodType:
+        (req.query.rejectsFoodType != undefined &&
+          req.query.rejectsFoodType.trim() != "" &&
+          req.query.rejectsFoodType?.split(",")) ||
+        [],
+      avoidsAllergens:
+        (req.query.avoidsAllergens != undefined &&
+          req.query.avoidsAllergens.trim() != "" &&
+          req.query.avoidsAllergens?.split(",")) ||
+        [],
       limit: pageSize,
       offset: offset,
     };
