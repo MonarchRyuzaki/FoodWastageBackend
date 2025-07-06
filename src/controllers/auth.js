@@ -99,15 +99,6 @@ const handleNGORegister = async (req, res) => {
       description: req.body.description,
       city: req.body.city,
       state: req.body.state,
-      prefersFoodType: req.body.prefersFoodType
-        .split(",")
-        .map((type) => type.trim()),
-      rejectsFoodType: req.body.rejectsFoodType
-        .split(",")
-        .map((type) => type.trim()),
-      avoidsAllergen: req.body.avoidsAllergen
-        .split(",")
-        .map((allergen) => allergen.trim()),
     };
     console.log(ngoData);
     for (const Model of Models) {
@@ -140,12 +131,6 @@ const handleNGORegister = async (req, res) => {
     const ngo = new NGO(ngoData);
     ngo.status = "approved"; // Set status to approved for now
     await ngo.save();
-    await insertNewNGO({
-      mongoID: ngo._id,
-      prefersFoodType: ngoData.prefersFoodType,
-      rejectsFoodType: ngoData.rejectsFoodType,
-      avoidsAllergen: ngoData.avoidsAllergen,
-    });
     res.status(201).json({ message: "NGO role added successfully" });
   } catch (err) {
     res.status(500).json({ error: err.message });

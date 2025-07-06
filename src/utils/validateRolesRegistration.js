@@ -88,15 +88,6 @@ export const validateNGO = (data) => {
       "string.empty": "Description is required.",
       "string.max": "Description cannot exceed 500 characters.",
     }),
-    prefersFoodType: Joi.array()
-      .items(Joi.string().valid(...foodTypes))
-      .min(0),
-    rejectsFoodType: Joi.array()
-      .items(Joi.string().valid(...foodTypes))
-      .min(0),
-    avoidsAllergen: Joi.array()
-      .items(Joi.string().valid(...allergens))
-      .min(0),
   });
 
   return schema.validate(data);
