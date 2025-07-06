@@ -18,11 +18,12 @@ export async function getDonationDistance({ mongoId, ngoLat, ngoLong }) {
     PREFIX geo:     <http://www.w3.org/2003/01/geo/wgs84_pos#>
     PREFIX omgeo:   <http://www.ontotext.com/owlim/geo#>
     
-    SELECT ( omgeo:distance(?lat, ?long, ${ngoLat}, ${ngoLong}) AS ?distanceKm )
+    SELECT ( omgeo:distance(?lat, ?long, ${ngoLat}, ${ngoLong}) AS ?distanceKm ) ?lat ?long ?priority
     WHERE {
       VALUES ?donation { <${donationUri}> }
       ?donation geo:lat ?lat .
       ?donation geo:long ?long.
+      ?donation :hasPriority ?priority.
     }
     LIMIT 1
   `;
@@ -30,7 +31,14 @@ export async function getDonationDistance({ mongoId, ngoLat, ngoLong }) {
   const { results } = await client.query(sparql);
   if (results.bindings && results.bindings.length) {
     // Parse and return the distance.
-    return parseFloat(results.bindings[0].distanceKm.value);
+    return {
+      distanceKm: parseFloat(results.bindings[0].distanceKm.value),
+      lat: parseFloat(results.bindings[0].lat.value),
+      long: parseFloat(results.bindings[0].long.value),
+      priority: results.bindings[0].priority
+        ? results.bindings[0].priority.value.split("#")[1]
+        : null,
+    };
   }
   return null;
 }

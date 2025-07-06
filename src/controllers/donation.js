@@ -306,7 +306,13 @@ export const getFoodDonation = async (req, res) => {
 
 export const getFoodDonationDetails = async (req, res) => {
   try {
-    const [donation, distanceKm] = await Promise.all([
+    console.log(req.params.id, req.query.lat, req.query.long);
+    const [donation, {
+      distanceKm,
+      lat: donationLat,
+      long: donationLong,
+      priority,
+    }] = await Promise.all([
       FoodDonation.findById(req.params.id).populate('userId').lean().exec(),
       getDonationDistance({
         mongoId: req.params.id,
@@ -315,6 +321,9 @@ export const getFoodDonationDetails = async (req, res) => {
       }),
     ]);
     donation.distance = distanceKm;
+    donation.lat = donationLat;
+    donation.long = donationLong;
+    donation.priority = priority;
     res.json({ donation });
   } catch (err) {
     res.status(500).json({ error: err.message });
