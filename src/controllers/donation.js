@@ -78,6 +78,11 @@ export const createFoodDonation = async (req, res) => {
 
 export const getFoodDonation = async (req, res) => {
   try {
+    // Set cache control headers to prevent caching
+    res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+    res.setHeader("Pragma", "no-cache");
+    res.setHeader("Expires", "0");
+
     // Parse and validate coordinates early
     const ngoLat = parseFloat(req.query.lat);
     const ngoLong = parseFloat(req.query.long);
@@ -89,10 +94,7 @@ export const getFoodDonation = async (req, res) => {
 
     // PAGINATION PARAMETERS
     const page = Math.max(1, parseInt(req.query.page) || 1);
-    const pageSize = Math.min(
-      20,
-      Math.max(1, parseInt(req.query.pageSize) || 50)
-    );
+    const pageSize = 25;
     const offset = (page - 1) * pageSize;
 
     // Optimize SPARQL search parameters

@@ -18,7 +18,7 @@ export async function searchDonations({
   prefersFoodType = [],
   rejectsFoodType = [],
   avoidsAllergens = [],
-  limit = 20, // Default to pagination size
+  limit = 50, // Default to pagination size
   offset = 0, // Add offset for pagination
 }) {
   // Input validation
@@ -131,7 +131,6 @@ export async function searchDonations({
       
       ${minusClauses.join("\n      ")}
     }
-    LIMIT ${sparqlLimit}
   `.trim();
   try {
     const { results } = await getClient().query(sparql);
