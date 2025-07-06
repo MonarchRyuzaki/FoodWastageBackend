@@ -40,17 +40,8 @@ export const createFoodDonation = async (req, res) => {
         return res.status(400).json({ error: error.details[0].message });
       }
     }
-
-    // Create new donation
-    const newDonation = new FoodDonation(foodData);
-
-    // OPTIMIZATION: Parallel execution of independent operations
     const parallelOperations = [];
-
-    // MongoDB save
-    parallelOperations.push(newDonation.save());
-
-    // SPARQL insert (runs in parallel with MongoDB save)
+    const newDonation = new FoodDonation(foodData);
     parallelOperations.push(
       insertNewFoodDonation({
         mongoID: newDonation._id,
@@ -62,45 +53,17 @@ export const createFoodDonation = async (req, res) => {
         donorMongoID: req.user.id,
       })
     );
-
-    // Execute core operations in parallel
-    // const results = await Promise.allSettled(parallelOperations);
-
-    // // Check if MongoDB save succeeded
-    // if (results[0].status === "rejected") {
-    //   throw new Error(`MongoDB save failed: ${results[0].reason.message}`);
-    // }
-
-    // // Log SPARQL errors but don't fail the request
-    // if (
-    //   results[1].status === "rejected" &&
-    //   process.env.NODE_ENV !== "benchmark"
-    // ) {
-    //   console.error("SPARQL insert failed:", results[1].reason);
-    // }
-
-    // Handle image upload asynchronously (don't block response)
-    if (process.env.NODE_ENV !== "benchmark" && req.files) {
-      // Fire and forget - upload images in background
-      setImmediate(async () => {
-        try {
-          const imageUrls = [];
-          for (const file of req.files) {
-            const result = await uploadToCloudinary(
-              file.buffer,
-              "food-donation-images"
-            );
-            imageUrls.push(result);
-          }
-          // Update donation with image URLs
-          await FoodDonation.findByIdAndUpdate(newDonation._id, {
-            foodImage: imageUrls,
-          });
-        } catch (error) {
-          console.error("Background image upload failed:", error);
-        }
-      });
+    if (process.env.NODE_ENV !== "benchmark" && req.file) {
+      const imageUrls = [];
+      const result = await uploadToCloudinary(
+        req.file.buffer,
+        "food-donation-images"
+      );
+      imageUrls.push(result);
+      newDonation.foodImage = imageUrls;
     }
+    parallelOperations.push(newDonation.save());
+    const [_, newDonationSaved] = await Promise.all(parallelOperations);
 
     // Return response immediately after core operations
     res.status(201).json({
@@ -307,13 +270,11 @@ export const getFoodDonation = async (req, res) => {
 export const getFoodDonationDetails = async (req, res) => {
   try {
     console.log(req.params.id, req.query.lat, req.query.long);
-    const [donation, {
-      distanceKm,
-      lat: donationLat,
-      long: donationLong,
-      priority,
-    }] = await Promise.all([
-      FoodDonation.findById(req.params.id).populate('userId').lean().exec(),
+    const [
+      donation,
+      { distanceKm, lat: donationLat, long: donationLong, priority },
+    ] = await Promise.all([
+      FoodDonation.findById(req.params.id).populate("userId").lean().exec(),
       getDonationDistance({
         mongoId: req.params.id,
         ngoLat: parseFloat(req.query.lat),
