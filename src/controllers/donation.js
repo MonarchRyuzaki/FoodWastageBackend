@@ -212,6 +212,7 @@ export const getFoodDonation = async (req, res) => {
         userId: 1,
       }
     )
+      .populate("userId")
       .lean() // Use lean for better performance
       .exec();
     // Create a Map for O(1) lookup instead of O(n) find operations
@@ -306,7 +307,7 @@ export const getFoodDonation = async (req, res) => {
 export const getFoodDonationDetails = async (req, res) => {
   try {
     const [donation, distanceKm] = await Promise.all([
-      FoodDonation.findById(req.params.id).lean().exec(),
+      FoodDonation.findById(req.params.id).populate('userId').lean().exec(),
       getDonationDistance({
         mongoId: req.params.id,
         ngoLat: parseFloat(req.query.lat),
